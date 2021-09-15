@@ -4,9 +4,9 @@ import json
 import time
 import multiprocessing
 import tkinter as tk
-import sys
+import platform
 
-if sys == 'linux':
+if platform.system() != 'Windows':
     import RPi.GPIO as GPIO
 
     from mfrc522 import SimpleMFRC522
@@ -64,7 +64,8 @@ def GUI():
 
     instuctions = tk.Label(root, text="This charger is out of order\n and is not able to charge at the moment.", font="ITCAvantGardeStd", bg='black', fg='#E5E5E5')
     instuctions.place(x=108, y=701)
-    root. attributes('-fullscreen',True)
+    if platform.system() != 'Windows':
+        root. attributes('-fullscreen',True)
     root.config(cursor="none")
     root.mainloop()
 
@@ -102,13 +103,14 @@ if __name__ == '__main__':
     OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
     OCPP.start()
 
-    if sys == 'linux':
+    if platform.system() != 'Windows':
         rfid = Process(target=RFID)
         rfid.start()
 
     gui.join()
     OCPP.join()
-    if sys == 'linux':
+
+    if platform.system() != 'Windows':
         rfid.join()
     
     
