@@ -4,6 +4,12 @@ import json
 import time
 import multiprocessing
 import tkinter as tk
+import sys
+
+if sys == 'linux':
+    import RPi.GPIO as GPIO
+
+    from mfrc522 import SimpleMFRC522
 
 from PIL import Image, ImageTk
 from multiprocessing import Process
@@ -62,6 +68,32 @@ def GUI():
     root.config(cursor="none")
     root.mainloop()
 
+def RFID():
+    while True:
+        reader = SimpleMFRC522()
+
+        print("To read tag press y, to write to tag press x")
+        val = input('Input action: ')
+
+        if val == "y":
+            try:
+                    print("Place tag on reader")
+                    id, text = reader.read()
+                    print("Tag ID:", id)
+                    print("Tag text:", text)
+            finally:
+                    GPIO.cleanup()
+        elif val == "x":
+            try:
+                    text = input('new data: ')
+                    print("Now place your tag to write")
+                    reader.write(text)
+                    print("written")
+            finally:
+                    GPIO.cleanup()
+        else:
+            print("Wrong action given")
+            GPIO.cleanup()
 
 if __name__ == '__main__':
     gui = Process(target=GUI)
@@ -70,7 +102,13 @@ if __name__ == '__main__':
     OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
     OCPP.start()
 
+    if sys == 'linux':
+        rfid = Process(target=RFID)
+        rfid.start()
+
     gui.join()
     OCPP.join()
+    if sys == 'linux':
+        rfid.join()
     
     
