@@ -9,6 +9,10 @@ def change_to_available():
     notavailable_frame.pack_forget()
     available_frame.pack(expand=True, fill='both')
 
+def change_to_authorizing():
+    available_frame.pack_forget()
+    authorizing_frame.pack(expand=True, fill='both')
+
 listID =  [3, 5, 7, 9, 3, 4]
 
 root = tk.Tk()
@@ -21,6 +25,7 @@ root.overrideredirect(False)
 startingup_frame = tk.Frame(root, width=480, height=800, bg='black')
 notavailable_frame = tk.Frame(root, width=480, height=800, bg='black')
 available_frame = tk.Frame(root, width=480, height=800, bg='black')
+authorizing_frame = tk.Frame(root, width=480, height=800, bg='black')
 
 # Starting up screen ######################
 
@@ -111,6 +116,10 @@ ChargerID.place(x=341, y=714)
 ChargerID = tk.Label(available_frame, text=listID [5], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
 ChargerID.place(x=410, y=714)
 
+#Button
+btn_change_to_authorizing = tk.Button(available_frame, text='Change to authorizing', command=change_to_authorizing)
+btn_change_to_authorizing.pack(side='bottom')
+
 ##########################################
 
 # Not availeble screen ####################
@@ -139,6 +148,28 @@ instuctions.place(x=108, y=701)
 #Button
 btn_change_to_notavailable = tk.Button(notavailable_frame, text='Change to available', command=change_to_available)
 btn_change_to_notavailable.pack(side='bottom')
+
+############################################
+
+# Authorizing Screen ####################
+
+#Logo
+logo = Image.open("Pictures/white.png")
+logo = ImageTk.PhotoImage(logo)
+img_1 = tk.Label(authorizing_frame, image=logo, bg='black')
+img_1.image = logo
+img_1.place(x=90, y=40)
+
+#Dongle
+dongle = Image.open("Pictures/Group 3-14.png")
+dongle = ImageTk.PhotoImage(dongle)
+img_2 = tk.Label(authorizing_frame, image=dongle, bg='black')
+img_2.image = cross
+img_2.place(x=118, y=202)
+
+#Authorizing text
+authorizing_text = tk.Label(authorizing_frame, text="Authorizing...", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
+authorizing_text.place(x=158, y=563)
 
 ############################################
 
