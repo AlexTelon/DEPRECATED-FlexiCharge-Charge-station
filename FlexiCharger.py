@@ -41,7 +41,10 @@ async def connect():
 def GUI():
     root = tk.Tk()
 
-    canvas = tk.Canvas(root, width=480, height=800, bg='black')
+    root.overrideredirect(True)
+    root.overrideredirect(False)
+
+    canvas = tk.Canvas(root, width=480, height=800, bg='black', highlightthickness=0)
     canvas.grid(columnspan=3)
 
     #Logo
