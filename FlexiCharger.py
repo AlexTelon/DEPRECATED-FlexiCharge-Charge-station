@@ -29,27 +29,27 @@ authorizing_frame = tk.Frame(root, width=480, height=800, bg='black')
 
 # Starting up screen ######################
 
-#Logo
-img_logoGreen = Image.open("Pictures/color-2.png")
-img_logoGreen = ImageTk.PhotoImage(img_logoGreen)
-logo_startingup = tk.Label(startingup_frame, image=img_logoGreen, bg='black')
-logo_startingup.image = img_logoGreen
-logo_startingup.place(x=137, y=202)
+#Green lightning logo
+img_greenLightning = Image.open("Pictures/color-2.png")
+img_greenLightning = ImageTk.PhotoImage(img_greenLightning)
+logo_greenLightning = tk.Label(startingup_frame, image=img_greenLightning, bg='black')
+logo_greenLightning.image = img_greenLightning
+logo_greenLightning.place(x=137, y=202)
 
 #Flexi charge text
-img_flexiCharge = Image.open("Pictures/flexichargetext1.png")
-img_flexiCharge = ImageTk.PhotoImage(img_flexiCharge)
-logo_flexiCharge1 = tk.Label(startingup_frame, image=img_flexiCharge, bg='black')
-logo_flexiCharge1.image = img_logoGreen
-logo_flexiCharge1.place(x=88, y=479)
+img_flexiChargeText = Image.open("Pictures/flexichargetext1.png")
+img_flexiChargeText = ImageTk.PhotoImage(img_flexiChargeText)
+logo_flexiChargeText = tk.Label(startingup_frame, image=img_flexiChargeText, bg='black')
+logo_flexiChargeText.image = img_flexiChargeText
+logo_flexiChargeText.place(x=88, y=479)
 
 #Starting up text
-startingup_text = tk.Label(startingup_frame, text="Starting up...", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
-startingup_text.place(x=153, y=621)
+startingUp_text = tk.Label(startingup_frame, text="Starting up...", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
+startingUp_text.place(x=153, y=621)
 
 #Button
-btn_change_to_notavailable = tk.Button(startingup_frame, text='Change to notavailable', command=change_to_not_available)
-btn_change_to_notavailable.pack(side='bottom')
+btn_change_to_not_available = tk.Button(startingup_frame, text='Change to notavailable', command=change_to_not_available)
+btn_change_to_not_available.pack(side='bottom')
 
 ##########################################
 
@@ -124,19 +124,19 @@ btn_change_to_authorizing.pack(side='bottom')
 
 # Not availeble screen ####################
 
-#Logo
-logo = Image.open("Pictures/white.png")
-logo = ImageTk.PhotoImage(logo)
-img_1 = tk.Label(notavailable_frame, image=logo, bg='black')
-img_1.image = logo
-img_1.place(x=90, y=40)
+#Flexi charge with lightning text
+img_flexiChargeTextLightning = Image.open("Pictures/flexichargetextlightning.png")
+img_flexiChargeTextLightning = ImageTk.PhotoImage(img_flexiChargeTextLightning)
+logo_flexiChargeTextLightning = tk.Label(notavailable_frame, image=img_flexiChargeTextLightning, bg='black')
+logo_flexiChargeTextLightning.image = img_flexiChargeTextLightning
+logo_flexiChargeTextLightning.place(x=90, y=40)
 
 #Cross
-cross = Image.open("Pictures/cross.png")
-cross = ImageTk.PhotoImage(cross)
-img_2 = tk.Label(notavailable_frame, image=cross, bg='black')
-img_2.image = cross
-img_2.place(x=118, y=202)
+img_redCross = Image.open("Pictures/cross.png")
+img_redCross = ImageTk.PhotoImage(img_redCross)
+logo_redCross = tk.Label(notavailable_frame, image=img_redCross, bg='black')
+logo_redCross.image = img_redCross
+logo_redCross.place(x=118, y=202)
 
 #instuctions
 instuctions = tk.Label(notavailable_frame, text="Charger not available", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
@@ -154,7 +154,7 @@ btn_change_to_notavailable.pack(side='bottom')
 # Authorizing Screen ####################
 
 #Logo
-logo = Image.open("Pictures/white.png")
+logo = Image.open("Pictures/flexichargetextlightning.png")
 logo = ImageTk.PhotoImage(logo)
 img_1 = tk.Label(authorizing_frame, image=logo, bg='black')
 img_1.image = logo
@@ -164,7 +164,7 @@ img_1.place(x=90, y=40)
 dongle = Image.open("Pictures/Group 3-14.png")
 dongle = ImageTk.PhotoImage(dongle)
 img_2 = tk.Label(authorizing_frame, image=dongle, bg='black')
-img_2.image = cross
+img_2.image = img_redCross
 img_2.place(x=118, y=202)
 
 #Authorizing text
