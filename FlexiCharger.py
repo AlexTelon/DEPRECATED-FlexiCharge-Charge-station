@@ -18,6 +18,15 @@ from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, RegistrationStatus
 from ocpp.v16 import call_result, call
 
+root = tk.Tk()
+root.geometry('480x800')
+root.overrideredirect(True)
+root.overrideredirect(False)
+
+startingup_frame = tk.Frame(root, width=480, height=800, bg='black')
+notavailable_frame = tk.Frame(root, width=480, height=800, bg='black')
+available_frame = tk.Frame(root, width=480, height=800, bg='black')
+authorizing_frame = tk.Frame(root, width=480, height=800, bg='black')
 
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
@@ -38,33 +47,12 @@ async def connect():
             except websockets.ConnectionClosed:
                 print("Disconnected.")
 
-def change_to_not_available():
-    startingup_frame.pack_forget()
-    notavailable_frame.pack(expand=True, fill='both')
-    
-def change_to_available():
-    notavailable_frame.pack_forget()
-    available_frame.pack(expand=True, fill='both')
-
-def change_to_authorizing():
-    available_frame.pack_forget()
-    authorizing_frame.pack(expand=True, fill='both')
-
 def GUI():
-    listID =  [3, 5, 7, 9, 3, 4]
+    listID =  [1, 4, 3, 7, 5, 9]
 
-    root = tk.Tk()
-    root.geometry('480x800')
-    root.overrideredirect(True)
-    root.overrideredirect(False)
     if platform.system() != 'Windows':
-        root.attributes('-fullscreen', True)   #kommentera inte bort vid användning på raspberry
-        root.config(cursor="none")             #kommentera inte bort vid användning på raspberry
-
-    startingup_frame = tk.Frame(root, width=480, height=800, bg='black')
-    notavailable_frame = tk.Frame(root, width=480, height=800, bg='black')
-    available_frame = tk.Frame(root, width=480, height=800, bg='black')
-    authorizing_frame = tk.Frame(root, width=480, height=800, bg='black')
+        root.attributes('-fullscreen', True)   
+        root.config(cursor="none")             
 
     # Starting up screen ######################
 
@@ -214,6 +202,19 @@ def GUI():
 
 
     startingup_frame.pack(expand=True, fill='both')
+    root.mainloop()
+
+def change_to_not_available():
+    startingup_frame.pack_forget()
+    notavailable_frame.pack(expand=True, fill='both')
+    
+def change_to_available():
+    notavailable_frame.pack_forget()
+    available_frame.pack(expand=True, fill='both')
+
+def change_to_authorizing():
+    available_frame.pack_forget()
+    authorizing_frame.pack(expand=True, fill='both')
 
 def RFID():
     while True:
