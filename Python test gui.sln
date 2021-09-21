@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "FlexiCharger", "FlexiCharger.pyproj", "{8D6133FD-392C-46B6-8F42-4CB088E9F1EA}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python test gui", "Python test gui.pyproj", "{7E30DC02-9C3A-459C-96E1-6F502150AA9D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,13 +11,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8D6133FD-392C-46B6-8F42-4CB088E9F1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D6133FD-392C-46B6-8F42-4CB088E9F1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E30DC02-9C3A-459C-96E1-6F502150AA9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E30DC02-9C3A-459C-96E1-6F502150AA9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {090B1A3B-8094-4736-BF60-7643BB48CE11}
+		SolutionGuid = {7D21FC28-FE07-4563-92AA-43B56DA4E309}
 	EndGlobalSection
 EndGlobal
