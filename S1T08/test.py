@@ -3,8 +3,10 @@ import websockets
 import json
 import time
 
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
+
 
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
@@ -12,6 +14,11 @@ from ocpp.v16.enums import Action, RegistrationStatus
 from ocpp.v16 import call_result, call
 
 
+from StateHandler import States
+from StateHandler import StateHandler
+
+
+        
 def send_heartbeat(ws):
         hb = [2, "knaskalas", "Heartbeat", {}]
         z = json.dumps(hb)
@@ -68,5 +75,14 @@ async def connect():
             print("Response: " + await websocket.recv())
             time.sleep(3)
 
+          
+def statemachine():
+    if state.get_state() == States.S_STARTUP:
+        print("Starting up...")
+            
 
-asyncio.get_event_loop().run_until_complete(connect())
+state = StateHandler()
+
+statemachine()
+            
+#asyncio.get_event_loop().run_until_complete(connect())
