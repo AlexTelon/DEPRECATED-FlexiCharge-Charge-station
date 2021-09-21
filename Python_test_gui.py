@@ -36,6 +36,7 @@ layout1 =    [
 
 window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
 #window.Maximize()
+window.TKroot["cursor"] = "none"
 
 screen = 0
 while True:
