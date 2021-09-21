@@ -79,7 +79,29 @@ async def connect():
 def statemachine():
     if state.get_state() == States.S_STARTUP:
         print("Starting up...")
-            
+        
+        ### Pseudo-code: ###
+        # if charger_connected:
+        #    state.set_state(States.S_CONNECTED)
+        # else
+        #    state.set_state(States.S_NOTAVAILABLE)
+        ### ###    
+    elif state.get_state() == States.AVAILABLE:
+    
+    elif state.get_state() == States.NOTAVAILABLE:
+    
+    elif state.get_state() == States.CONNECTING:
+    
+    elif state.get_state() == States.CONNECTED:
+    
+    elif state.get_state() == States.DISPLAYID:
+    
+    elif state.get_state() == States.AUTHORIZING:
+    
+    elif state.get_state() == States.PLUGINCABLE:
+    
+    else
+        print("wtf man.")
 
 state = StateHandler()
 
