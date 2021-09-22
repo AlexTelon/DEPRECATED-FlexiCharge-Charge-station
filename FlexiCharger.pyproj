@@ -2,15 +2,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>7e30dc02-9c3a-459c-96e1-6f502150aa9d</ProjectGuid>
+    <ProjectGuid>8d6133fd-392c-46b6-8f42-4cb088e9f1ea</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Python_test_gui.py</StartupFile>
+    <StartupFile>FlexiCharger.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>Python test gui</Name>
-    <RootNamespace>Python test gui</RootNamespace>
+    <Name>FlexiCharger</Name>
+    <RootNamespace>FlexiCharger</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Python_test_gui.py" />
+    <Compile Include="FlexiCharger.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
