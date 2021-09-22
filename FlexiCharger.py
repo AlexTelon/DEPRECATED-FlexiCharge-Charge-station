@@ -31,7 +31,24 @@ def get_img_data(f, maxsize=(480, 800)):
     del img
     return bio.getvalue()
 
-def statemachine():
+state = StateHandler()
+img_chargerID = get_img_data('Pictures/chargerid.png')
+img_startingUp = get_img_data('Pictures/StartingUp.png')
+img_notAvailable = get_img_data('Pictures/NotAvailable.png')
+img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
+img_authorizing = get_img_data('Pictures/authorizing.png')
+img_charging = get_img_data('Pictures/charging.png')
+img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
+img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
+img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
+img_followInstructions = get_img_data('Pictures/FollowInstructions.png')
+img_fullyCharged = get_img_data('Pictures/FullyCharged.png')
+img_plugInCable = get_img_data('Pictures/PlugInCable.png')
+img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
+img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
+
+
+def statemachine(window):
     if state.get_state() == States.S_STARTUP:
         pass
 
@@ -77,21 +94,6 @@ async def connect():
 def GUI():
     sg.theme('Black')
 
-    img_chargerID = get_img_data('Pictures/chargerid.png')
-    img_startingUp = get_img_data('Pictures/StartingUp.png')
-    img_notAvailable = get_img_data('Pictures/NotAvailable.png')
-    img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
-    img_authorizing = get_img_data('Pictures/authorizing.png')
-    img_charging = get_img_data('Pictures/charging.png')
-    img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
-    img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
-    img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
-    img_followInstructions = get_img_data('Pictures/FollowInstructions.png')
-    img_fullyCharged = get_img_data('Pictures/FullyCharged.png')
-    img_plugInCable = get_img_data('Pictures/PlugInCable.png')
-    img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
-    img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
-
     layout1 =    [
                     [sg.Image(data=img_startingUp, key='__IMAGE__', size=(480, 800))]
                 ]
@@ -100,10 +102,9 @@ def GUI():
     #window.Maximize()
     window.TKroot["cursor"] = "none"
     screen = 0
-    state = StateHandler()
 
     while True:
-        statemachine()
+        statemachine(window)
     window.close()
 
 def RFID():
