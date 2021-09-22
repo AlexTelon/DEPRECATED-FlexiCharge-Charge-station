@@ -53,8 +53,12 @@ def GUI():
     sg.theme('Black')
 
     layout1 =    [
-                    [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800)),
-                     sg.Text("Hej!", text_color="white",size=(20,20))]
+                    [
+                        sg.Text("Window 2")
+                    ],
+                    [
+                        sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))
+                    ]
                 ]
 
     window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
@@ -67,7 +71,7 @@ def GUI():
 
 async def statemachine():
     window = GUI()
-    url = "ws://localhost:9000/CP_Carl"
+    url = "ws://54.220.194.65:1337/CP_Carl"
     global state
     global lastState
      
