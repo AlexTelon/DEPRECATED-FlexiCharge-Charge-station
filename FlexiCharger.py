@@ -22,8 +22,6 @@ from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, RegistrationStatus
 from ocpp.v16 import call_result, call
 
-manager = multiprocessing.Manager
-
 
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
@@ -34,6 +32,7 @@ def get_img_data(f, maxsize=(480, 800)):
     return bio.getvalue()
 
 state = StateHandler()
+lastState = StateHandler()
 
 img_chargerID = get_img_data('Pictures/chargerid.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -50,34 +49,74 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 
+def GUI():
+    sg.theme('Black')
 
-def statemachine(window):
+    layout1 =    [
+                    [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800)),
+                     sg.Text("Hej!", text_color="white",size=(20,20))]
+                ]
+
+    window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
+    #window.Maximize()
+    window.TKroot["cursor"] = "none"
+    screen = 0
+
+    return window
+
+
+async def statemachine():
+    window = GUI()
+    url = "ws://localhost:9000/CP_Carl"
     global state
-    print(state.get_state())
-    if state.get_state() == States.S_STARTUP:
-        pass
+    global lastState
+     
+    while True:
+        print(state.get_state())
 
-    elif state.get_state() == States.AVAILABLE:
-        window['IMAGE'].update(data=img_chargerID)
-        window.refresh()
-
-    elif state.get_state() == States.NOTAVAILABLE:
-        window['IMAGE'].update(data=img_notAvailable)
-        window.refresh()
-
-    #elif state.get_state() == States.CONNECTING:
-
-    #elif state.get_state() == States.CONNECTED:
-
-    #elif state.get_state() == States.DISPLAYID:
-
-    #elif state.get_state() == States.AUTHORIZING:
-
-    #elif state.get_state() == States.PLUGINCABLE:
-
-    else:
-        window['IMAGE'].update(data=img_notAvailable)
-        window.refresh()
+        if state.get_state() == States.S_STARTUP:
+            try:
+                async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+                    state.set_state(States.S_AVAILABLE)
+                    #print("Connected.")
+                    x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
+                    y = json.dumps(x)
+                    await websocket.send(y)
+                    try:
+                        x = [2, "CP_Carl", "Heartbeat", {}]
+                        y = json.dumps(x)
+                        #print("Sending heartbeat.")
+                        await websocket.send(y)
+                        time.sleep(3)
+                        await websocket.recv()
+                    except websockets.ConnectionClosed:
+                        print("Disconnected.")
+            except:
+                state.set_state(States.S_NOTAVAILABLE)
+       
+        elif state.get_state() == States.S_AVAILABLE:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window['IMAGE'].update(data=img_chargerID)
+                window.refresh()
+       
+        elif state.get_state() == States.S_NOTAVAILABLE:
+            window['IMAGE'].update(data=img_notAvailable)
+            window.refresh()
+       
+        #elif state.get_state() == States.CONNECTING:
+       
+        #elif state.get_state() == States.CONNECTED:
+       
+        #elif state.get_state() == States.DISPLAYID:
+       
+        #elif state.get_state() == States.AUTHORIZING:
+       
+        #elif state.get_state() == States.PLUGINCABLE:
+       
+        else:
+            window['IMAGE'].update(data=img_notAvailable)
+            window.refresh()
 
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
@@ -104,21 +143,6 @@ async def connect():
         print("här")
         state.set_state(States.S_NOTAVAILABLE)
 
-def GUI():
-    sg.theme('Black')
-
-    layout1 =    [
-                    [sg.Image(data=img_startingUp, key='__IMAGE__', size=(480, 800))]
-                ]
-
-    window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
-    #window.Maximize()
-    window.TKroot["cursor"] = "none"
-    screen = 0
-
-    while True:
-        statemachine(window)
-    window.close()
 
 def RFID():
     while True:
@@ -148,20 +172,21 @@ def RFID():
             GPIO.cleanup()
 
 if __name__ == '__main__':
-    gui = Process(target=GUI)
-    gui.start()
+    asyncio.get_event_loop().run_until_complete(statemachine())
+    #gui = Process(target=GUI)
+    #gui.start()
 
-    OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
-    OCPP.start()
+    #OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
+    #OCPP.start()
 
-    if platform.system() != 'Windows':
-        rfid = Process(target=RFID)
-        rfid.start()
+    #if platform.system() != 'Windows':
+    #    rfid = Process(target=RFID)
+    #    rfid.start()
 
-    gui.join()
-    OCPP.join()
+    #gui.join()
+    #OCPP.join()
 
-    if platform.system() != 'Windows':
-        rfid.join()
+    #if platform.system() != 'Windows':
+    #    rfid.join()
     
     
