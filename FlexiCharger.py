@@ -28,6 +28,14 @@ notavailable_frame = tk.Frame(root, width=480, height=800, bg='black')
 available_frame = tk.Frame(root, width=480, height=800, bg='black')
 authorizing_frame = tk.Frame(root, width=480, height=800, bg='black')
 
+def get_img_data(f, maxsize=(480, 800)):
+    img = Image.open(f)
+    img.thumbnail(maxsize)
+    bio = io.BytesIO()
+    img.save(bio, format="PNG")
+    del img
+    return bio.getvalue()
+
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
@@ -48,173 +56,41 @@ async def connect():
                 print("Disconnected.")
 
 def GUI():
-    listID =  [1, 4, 3, 7, 5, 9]
+    sg.theme('Black')
 
-    if platform.system() != 'Windows':
-        root.attributes('-fullscreen', True)   
-        root.config(cursor="none")             
+    img_chargerID = get_img_data('Pictures/chargerid.png')
+    img_startingUp = get_img_data('Pictures/StartingUp.png')
+    img_notAvailable = get_img_data('Pictures/NotAvailable.png')
+    img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
+    img_authorizing = get_img_data('Pictures/authorizing.png')
+    img_charging = get_img_data('Pictures/charging.png')
+    img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
+    img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
+    img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
+    img_followInstructions = get_img_data('Pictures/FollowInstructions.png')
+    img_fullyCharged = get_img_data('Pictures/FullyCharged.png')
+    img_plugInCable = get_img_data('Pictures/PlugInCable.png')
+    img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
+    img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 
-    # Starting up screen ######################
+    layout1 =    [
+                    [sg.Image(data=img_startingUp, key='__IMAGE__', size=(480, 800))]
+                ]
 
-    #Logo
-    img_logoGreen = Image.open("Pictures/color-2.png")
-    img_logoGreen = ImageTk.PhotoImage(img_logoGreen)
-    logo_startingup = tk.Label(startingup_frame, image=img_logoGreen, bg='black')
-    logo_startingup.image = img_logoGreen
-    logo_startingup.place(x=137, y=202)
+    window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
+    #window.Maximize()
+    window.TKroot["cursor"] = "none"
+    screen = 0
 
-    #Flexi charge text
-    img_flexiCharge = Image.open("Pictures/flexichargetext1.png")
-    img_flexiCharge = ImageTk.PhotoImage(img_flexiCharge)
-    logo_flexiCharge1 = tk.Label(startingup_frame, image=img_flexiCharge, bg='black')
-    logo_flexiCharge1.image = img_logoGreen
-    logo_flexiCharge1.place(x=88, y=479)
-
-    #Starting up text
-    startingup_text = tk.Label(startingup_frame, text="Starting up...", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
-    startingup_text.place(x=153, y=621)
-
-    #Button
-    btn_change_to_notavailable = tk.Button(startingup_frame, text='Change to notavailable', command=change_to_not_available)
-    btn_change_to_notavailable.pack(side='bottom')
-
-    ##########################################
-
-    #   Avalable screen ######################
-
-    #Logo
-    chargeid = Image.open("Pictures/chargerid.png")
-    chargeid = ImageTk.PhotoImage(chargeid)
-    img_1 = tk.Label(available_frame, image=chargeid, bg='black')
-    img_1.image = chargeid
-    img_1.place(x=9, y=4)
-
-    #chargerID_display
-    chargerID1 = Image.open("Pictures/chargerid2.png")
-    resized = chargerID1.resize((40,64), Image.ANTIALIAS)
-    new_resized = ImageTk.PhotoImage(resized)
-    img_1 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_1.image = new_resized
-    img_1.place(x=57, y=708)
-
-    #chargerID_display
-    img_2 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_2.image = new_resized
-    img_2.place(x=126, y=708)
-
-    #chargerID_display
-    img_3 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_3.image = new_resized
-    img_3.place(x=195, y=708)
-
-    #chargerID_display
-    img_4 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_4.image = new_resized
-    img_4.place(x=264, y=708)
-
-    #chargerID_display
-    img_5 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_5.image = new_resized
-    img_5.place(x=333, y=708)
-
-
-    #chargerID_display
-    img_6 = tk.Label(available_frame, image=new_resized, bg='black')
-    img_6.image = new_resized
-    img_6.place(x=402, y=708)
-
-
-    #ChargerID
-    ChargerID = tk.Label(available_frame, text=listID [0], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=65, y=714)
-
-    ChargerID = tk.Label(available_frame, text=listID [1], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=134, y=714)
-
-    ChargerID = tk.Label(available_frame, text=listID [2], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=203, y=714)
-
-    ChargerID = tk.Label(available_frame, text=listID [3], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=272, y=714)
-
-    ChargerID = tk.Label(available_frame, text=listID [4], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=341, y=714)
-
-    ChargerID = tk.Label(available_frame, text=listID [5], font=("ITCAvantGardeStd", 30), bg='white', fg='black')
-    ChargerID.place(x=410, y=714)
-
-    #Button
-    btn_change_to_authorizing = tk.Button(available_frame, text='Change to authorizing', command=change_to_authorizing)
-    btn_change_to_authorizing.pack(side='bottom')
-
-    ##########################################
-
-    # Not availeble screen ####################
-
-    #Logo
-    logo = Image.open("Pictures/white.png")
-    logo = ImageTk.PhotoImage(logo)
-    img_1 = tk.Label(notavailable_frame, image=logo, bg='black')
-    img_1.image = logo
-    img_1.place(x=90, y=40)
-
-    #Cross
-    cross = Image.open("Pictures/cross.png")
-    cross = ImageTk.PhotoImage(cross)
-    img_2 = tk.Label(notavailable_frame, image=cross, bg='black')
-    img_2.image = cross
-    img_2.place(x=118, y=202)
-
-    #instuctions
-    instuctions = tk.Label(notavailable_frame, text="Charger not available", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
-    instuctions.place(x=118, y=563)
-
-    instuctions = tk.Label(notavailable_frame, text="This charger is out of order\n and is not able to charge at the moment.", font="ITCAvantGardeStd", bg='black', fg='#E5E5E5')
-    instuctions.place(x=108, y=701)
-
-    #Button
-    btn_change_to_notavailable = tk.Button(notavailable_frame, text='Change to available', command=change_to_available)
-    btn_change_to_notavailable.pack(side='bottom')
-
-    ############################################
-
-    # Authorizing Screen ####################
-
-    #Logo
-    logo = Image.open("Pictures/white.png")
-    logo = ImageTk.PhotoImage(logo)
-    img_1 = tk.Label(authorizing_frame, image=logo, bg='black')
-    img_1.image = logo
-    img_1.place(x=90, y=40)
-
-    #Dongle
-    dongle = Image.open("Pictures/Group 3-14.png")
-    dongle = ImageTk.PhotoImage(dongle)
-    img_2 = tk.Label(authorizing_frame, image=dongle, bg='black')
-    img_2.image = cross
-    img_2.place(x=118, y=202)
-
-    #Authorizing text
-    authorizing_text = tk.Label(authorizing_frame, text="Authorizing...", font=("ITCAvantGardeStd", 20), bg='black', fg='#E5E5E5')
-    authorizing_text.place(x=158, y=563)
-
-    ############################################
-
-
-    startingup_frame.pack(expand=True, fill='both')
-    root.mainloop()
-
-def change_to_not_available():
-    startingup_frame.pack_forget()
-    notavailable_frame.pack(expand=True, fill='both')
-    
-def change_to_available():
-    notavailable_frame.pack_forget()
-    available_frame.pack(expand=True, fill='both')
-
-def change_to_authorizing():
-    available_frame.pack_forget()
-    authorizing_frame.pack(expand=True, fill='both')
+    while True:
+        if screen == 2:
+            screen = 0
+            window['__IMAGE__'].update(data=img_chargerID)
+            window.refresh()
+        else:
+            screen += 1
+            time.sleep(3)
+    window.close()
 
 def RFID():
     while True:
