@@ -22,6 +22,8 @@ from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, RegistrationStatus
 from ocpp.v16 import call_result, call
 
+manager = multiprocessing.Manager
+
 
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
@@ -32,6 +34,7 @@ def get_img_data(f, maxsize=(480, 800)):
     return bio.getvalue()
 
 state = StateHandler()
+
 img_chargerID = get_img_data('Pictures/chargerid.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
@@ -49,6 +52,8 @@ img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 
 
 def statemachine(window):
+    global state
+    print(state.get_state())
     if state.get_state() == States.S_STARTUP:
         pass
 
@@ -56,7 +61,9 @@ def statemachine(window):
         window['IMAGE'].update(data=img_chargerID)
         window.refresh()
 
-    #elif state.get_state() == States.NOTAVAILABLE:
+    elif state.get_state() == States.NOTAVAILABLE:
+        window['IMAGE'].update(data=img_notAvailable)
+        window.refresh()
 
     #elif state.get_state() == States.CONNECTING:
 
@@ -74,22 +81,28 @@ def statemachine(window):
 
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
-    async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-        print("Connected.")
-        x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
-        y = json.dumps(x)
-        await websocket.send(y)
+    global state
+    try:
+        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+            state.set_state(States.S_AVAILABLE)
+            print("Connected.")
+            x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
+            y = json.dumps(x)
+            await websocket.send(y)
 
-        while True:
-            try:
-                x = [2, "CP_Carl", "Heartbeat", {}]
-                y = json.dumps(x)
-                print("Sending heartbeat.")
-                await websocket.send(y)
-                time.sleep(3)
-                await websocket.recv()
-            except websockets.ConnectionClosed:
-                print("Disconnected.")
+            while True:
+                try:
+                    x = [2, "CP_Carl", "Heartbeat", {}]
+                    y = json.dumps(x)
+                    print("Sending heartbeat.")
+                    await websocket.send(y)
+                    time.sleep(3)
+                    await websocket.recv()
+                except websockets.ConnectionClosed:
+                    print("Disconnected.")
+    except:
+        print("här")
+        state.set_state(States.S_NOTAVAILABLE)
 
 def GUI():
     sg.theme('Black')
