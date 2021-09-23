@@ -4,7 +4,8 @@ import json
 import time
 
 
-from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 
 
@@ -19,11 +20,15 @@ from StateHandler import StateHandler
 
 
         
-def send_heartbeat(ws):
-        hb = [2, "knaskalas", "Heartbeat", {}]
-        z = json.dumps(hb)
-        print("Sending Heartbeat...")
-        ws.send(z)
+async def send_heartbeat():
+    while True:
+        print("heartbeat!!")
+        await asyncio.sleep(2)
+    # hb = [2, "knaskalas", "Heartbeat", {}]
+    # z = json.dumps(hb)
+    # print("Sending Heartbeat...")
+    # await ws.send(z)
+    # await ws.recv()
         
 
 async def connect():
@@ -76,46 +81,73 @@ async def connect():
             time.sleep(3)
 
           
+async def testfunc():
+    print("kalasknas")
+          
+          
 async def statemachine():
-    if state.get_state() == States.S_STARTUP:
-        print("Starting up...")
-        
-        # Only for temporary testing purposes: #
-        await connect()
-        
-        ### Pseudo-code: ###
-        # if charger_connected:
-        #    state.set_state(States.S_CONNECTED)
-        # else
-        #    state.set_state(States.S_NOTAVAILABLE)
-        ### ###    
-        
-    elif state.get_state() == States.AVAILABLE:
-        pass
-        
-    elif state.get_state() == States.NOTAVAILABLE:
-        pass
-        
-    elif state.get_state() == States.CONNECTING:
-        pass
-        
-    elif state.get_state() == States.CONNECTED:
-        pass
-        
-    elif state.get_state() == States.DISPLAYID:
-        pass
-        
-    elif state.get_state() == States.AUTHORIZING:
-        pass
-        
-    elif state.get_state() == States.PLUGINCABLE:
-        pass
-    
-    else:
-        print("wtf man.")
+    i = 1
+    url = "ws://localhost:9000/knaskalas"
+    async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+        print("Connected.")
+        while True:
+
+            if state.get_state() == States.S_STARTUP:
+                print("Starting up...")
+                
+                # Only for temporary testing purposes: #
+                #await connect()
+                await testfunc()
+                
+                state.set_state(States.S_AVAILABLE)
+                ### Pseudo-code: ###
+                # if charger_connected:
+                #    state.set_state(States.S_CONNECTED)
+                # else
+                #    state.set_state(States.S_NOTAVAILABLE)
+                ####################    
+                
+            elif state.get_state() == States.S_AVAILABLE:
+                print("statemachine!!")
+
+                await asyncio.sleep(4)
+                
+            elif state.get_state() == States.S_NOTAVAILABLE:
+                pass
+                
+            elif state.get_state() == States.S_CONNECTING:
+                pass
+                
+            elif state.get_state() == States.S_CONNECTED:
+                pass
+                
+            elif state.get_state() == States.S_DISPLAYID:
+                pass
+                
+            elif state.get_state() == States.S_AUTHORIZING:
+                pass
+                
+            elif state.get_state() == States.S_PLUGINCABLE:
+                pass
+            
+            else:
+                print("wtf man.")
+            
+            
+   
 
 state = StateHandler()
 
 #statemachine()
-            
-asyncio.get_event_loop().run_until_complete(statemachine())
+
+loop = asyncio.get_event_loop()
+#sched = AsyncIOScheduler()
+#sched.add_job(send_heartbeat, 'interval', seconds=1)
+#sched.start()
+tasks = [
+    loop.create_task(statemachine()),
+    loop.create_task(send_heartbeat()),
+]
+
+loop.run_until_complete(asyncio.wait(tasks))
+#asyncio.get_event_loop().run_until_complete(statemachine())
