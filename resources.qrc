@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="StartingUpScreen">
+    <file>Pictures/StartingUp.png</file>
+  </qresource>
+  <qresource prefix="ChargerNotAvailableScreen">
+    <file>Pictures/NotAvailable.png</file>
+  </qresource>
+  <qresource prefix="ChargerAvailableScreen">
+    <file>Pictures/chargerid.png</file>
+  </qresource>
+</RCC>
