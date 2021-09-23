@@ -76,9 +76,12 @@ async def connect():
             time.sleep(3)
 
           
-def statemachine():
+async def statemachine():
     if state.get_state() == States.S_STARTUP:
         print("Starting up...")
+        
+        # Only for temporary testing purposes: #
+        await connect()
         
         ### Pseudo-code: ###
         # if charger_connected:
@@ -86,25 +89,33 @@ def statemachine():
         # else
         #    state.set_state(States.S_NOTAVAILABLE)
         ### ###    
+        
     elif state.get_state() == States.AVAILABLE:
-    
+        pass
+        
     elif state.get_state() == States.NOTAVAILABLE:
-    
+        pass
+        
     elif state.get_state() == States.CONNECTING:
-    
+        pass
+        
     elif state.get_state() == States.CONNECTED:
-    
+        pass
+        
     elif state.get_state() == States.DISPLAYID:
-    
+        pass
+        
     elif state.get_state() == States.AUTHORIZING:
-    
+        pass
+        
     elif state.get_state() == States.PLUGINCABLE:
+        pass
     
-    else
+    else:
         print("wtf man.")
 
 state = StateHandler()
 
-statemachine()
+#statemachine()
             
-#asyncio.get_event_loop().run_until_complete(connect())
+asyncio.get_event_loop().run_until_complete(statemachine())
