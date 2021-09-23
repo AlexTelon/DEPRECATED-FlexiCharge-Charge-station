@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>Charging.png</file>
+    <file>chargerid.png</file>
+    <file>StartingUp.png</file>
+  </qresource>
+</RCC>
