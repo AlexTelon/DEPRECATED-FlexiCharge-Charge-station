@@ -19,7 +19,7 @@ from PIL import Image, ImageTk
 from multiprocessing import Process
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
-from ocpp.v16.enums import Action, RegistrationStatus
+from ocpp.v16.enums import Action, Location, RegistrationStatus
 from ocpp.v16 import call_result, call
 
 
@@ -33,6 +33,7 @@ def get_img_data(f, maxsize=(480, 800)):
 
 state = StateHandler()
 lastState = StateHandler()
+sg.Window._move_all_windows = True
 
 img_chargerID = get_img_data('Pictures/chargerid.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -49,24 +50,37 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 
+chargerID = ['1','2','3','4','5','6']
+
 def GUI():
     sg.theme('Black')
 
-    layout1 =    [
-                    [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800)),
-                     sg.Text("Hej!", text_color="white",size=(20,20))]
-                ]
+    background_image =  [
+                            [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))]
+                        ]
 
-    window = sg.Window(title="FlexiCharge", layout=layout1, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
+    background_window = sg.Window(title="FlexiCharge", layout=background_image, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
     #window.Maximize()
-    window.TKroot["cursor"] = "none"
-    screen = 0
-
-    return window
+    background_window.TKroot["cursor"] = "none"
+    
+    layout =    [
+                    [   
+                        sg.Text(chargerID[0], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
+                        sg.Text(chargerID[1], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
+                        sg.Text(chargerID[2], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
+                        sg.Text(chargerID[3], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
+                        sg.Text(chargerID[4], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
+                        sg.Text(chargerID[5], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center')
+                    ]
+                ]
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(23,703), finalize=True, keep_on_top=True, grab_anywhere=False,  transparent_color=sg.theme_background_color(), no_titlebar=True)
+    top_window.TKroot["cursor"] = "none"
+    top_window.hide()
+    return background_window,top_window
 
 
 async def statemachine():
-    window = GUI()
+    window_back,window_top = GUI()
     url = "ws://localhost:9000/CP_Carl"
     global state
     global lastState
@@ -92,17 +106,19 @@ async def statemachine():
                     except websockets.ConnectionClosed:
                         print("Disconnected.")
             except:
-                state.set_state(States.S_NOTAVAILABLE)
+                #state.set_state(States.S_NOTAVAILABLE)
+                state.set_state(States.S_AVAILABLE)
        
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window['IMAGE'].update(data=img_chargerID)
-                window.refresh()
+                window_back['IMAGE'].update(data=img_chargerID)
+                window_back.refresh()
+                window_top.UnHide()
        
         elif state.get_state() == States.S_NOTAVAILABLE:
-            window['IMAGE'].update(data=img_notAvailable)
-            window.refresh()
+            window_back['IMAGE'].update(data=img_notAvailable)
+            window_back.refresh()
        
         #elif state.get_state() == States.CONNECTING:
        
@@ -115,8 +131,8 @@ async def statemachine():
         #elif state.get_state() == States.PLUGINCABLE:
        
         else:
-            window['IMAGE'].update(data=img_notAvailable)
-            window.refresh()
+            window_back['IMAGE'].update(data=img_notAvailable)
+            window_back.refresh()
 
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
