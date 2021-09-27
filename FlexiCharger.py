@@ -1,4 +1,5 @@
 import asyncio
+import os
 import websockets
 import json
 import time
@@ -50,34 +51,34 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 
-chargerID = ['1','2','3','4','5','6']
+chargerID = ['1','3','3','7','6','9']
 
 def GUI():
     sg.theme('Black')
-
+    
     background_image =  [
                             [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))]
                         ]
 
     background_window = sg.Window(title="FlexiCharge", layout=background_image, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
-    #window.Maximize()
+    if platform.system() != 'Windows':
+        background_window.Maximize()
     background_window.TKroot["cursor"] = "none"
     
     layout =    [
                     [   
-                        sg.Text(chargerID[0], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
-                        sg.Text(chargerID[1], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
-                        sg.Text(chargerID[2], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
-                        sg.Text(chargerID[3], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
-                        sg.Text(chargerID[4], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center'),
-                        sg.Text(chargerID[5], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center')
+                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0)),
+                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0)),
+                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0)),
+                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0)),
+                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0)),
+                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0))
                     ]
                 ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(23,703), keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(27,703), keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
-
     return background_window,top_window
 
 
@@ -108,7 +109,6 @@ async def statemachine():
                     except websockets.ConnectionClosed:
                         print("Disconnected.")
             except:
-                #state.set_state(States.S_NOTAVAILABLE)
                 state.set_state(States.S_AVAILABLE)
        
         elif state.get_state() == States.S_AVAILABLE:
@@ -142,7 +142,6 @@ async def connect():
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
-            print("Connected.")
             x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
             y = json.dumps(x)
             await websocket.send(y)
@@ -158,7 +157,6 @@ async def connect():
                 except websockets.ConnectionClosed:
                     print("Disconnected.")
     except:
-        print("här")
         state.set_state(States.S_NOTAVAILABLE)
 
 
