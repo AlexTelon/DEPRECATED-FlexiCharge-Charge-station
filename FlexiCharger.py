@@ -59,7 +59,7 @@ def GUI():
                             [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))]
                         ]
 
-    background_window = sg.Window(title="FlexiCharge", layout=background_image, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False).Finalize()
+    background_window = sg.Window(title="FlexiCharge", layout=background_image, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
     #window.Maximize()
     background_window.TKroot["cursor"] = "none"
     
@@ -73,9 +73,11 @@ def GUI():
                         sg.Text(chargerID[5], size=(3,1), font=("Helvetica", 25), relief=sg.RELIEF_RIDGE, justification='center')
                     ]
                 ]
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(23,703), finalize=True, keep_on_top=True, grab_anywhere=False,  transparent_color=sg.theme_background_color(), no_titlebar=True)
+
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(23,703), keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
+
     return background_window,top_window
 
 
