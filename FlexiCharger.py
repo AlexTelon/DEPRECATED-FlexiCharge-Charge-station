@@ -81,10 +81,12 @@ def GUI():
     top_window.hide()
     return background_window,top_window
 
+def refreshWindows(window_back, window_top):
+    window_back.refresh()
+    window_top.refresh()
 
-async def statemachine():
+def statemachine():
     window_back,window_top = GUI()
-    url = "ws://localhost:9000/CP_Carl"
     global state
     global lastState
      
@@ -92,45 +94,39 @@ async def statemachine():
         print(state.get_state())
 
         if state.get_state() == States.S_STARTUP:
-            try:
-                async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-                    state.set_state(States.S_AVAILABLE)
-                    #print("Connected.")
-                    x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
-                    y = json.dumps(x)
-                    await websocket.send(y)
-                    try:
-                        x = [2, "CP_Carl", "Heartbeat", {}]
-                        y = json.dumps(x)
-                        #print("Sending heartbeat.")
-                        await websocket.send(y)
-                        time.sleep(3)
-                        await websocket.recv()
-                    except websockets.ConnectionClosed:
-                        print("Disconnected.")
-            except:
-                state.set_state(States.S_AVAILABLE)
+           asyncio.get_event_loop().run_until_complete(connect())
        
+        elif state.get_state() == States.S_NOTAVAILABLE:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_notAvailable)
+                refreshWindows(window_back,window_top)
+        
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_chargerID)
-                window_back.refresh()
                 window_top.UnHide()
+                refreshWindows(window_back,window_top)
+                time.sleep(5)
+                state.set_state(States.S_BUSY)
+
+        elif state.get_state() == States.S_BUSY:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_followInstructions)
+                window_top.hide()
+                refreshWindows(window_back,window_top)
+
+        #elif state.get_state() == States.S_CONNECTING:
        
-        elif state.get_state() == States.S_NOTAVAILABLE:
-            window_back['IMAGE'].update(data=img_notAvailable)
-            window_back.refresh()
+        #elif state.get_state() == States.S_CONNECTED:
        
-        #elif state.get_state() == States.CONNECTING:
+        #elif state.get_state() == States.S_DISPLAYID:
        
-        #elif state.get_state() == States.CONNECTED:
+        #elif state.get_state() == States.S_AUTHORIZING:
        
-        #elif state.get_state() == States.DISPLAYID:
-       
-        #elif state.get_state() == States.AUTHORIZING:
-       
-        #elif state.get_state() == States.PLUGINCABLE:
+        #elif state.get_state() == States.S_PLUGINCABLE:
        
         else:
             window_back['IMAGE'].update(data=img_notAvailable)
@@ -142,22 +138,21 @@ async def connect():
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
+            #print("Connected.")
             x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
             y = json.dumps(x)
             await websocket.send(y)
-
-            while True:
-                try:
-                    x = [2, "CP_Carl", "Heartbeat", {}]
-                    y = json.dumps(x)
-                    print("Sending heartbeat.")
-                    await websocket.send(y)
-                    time.sleep(3)
-                    await websocket.recv()
-                except websockets.ConnectionClosed:
-                    print("Disconnected.")
+            try:
+                x = [2, "CP_Carl", "Heartbeat", {}]
+                y = json.dumps(x)
+                #print("Sending heartbeat.")
+                await websocket.send(y)
+                time.sleep(3)
+                await websocket.recv()
+            except websockets.ConnectionClosed:
+                print("Disconnected.")
     except:
-        state.set_state(States.S_NOTAVAILABLE)
+        state.set_state(States.S_AVAILABLE)
 
 
 def RFID():
@@ -188,7 +183,7 @@ def RFID():
             GPIO.cleanup()
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(statemachine())
+    statemachine()
     #gui = Process(target=GUI)
     #gui.start()
 
