@@ -7,6 +7,7 @@ import multiprocessing
 import io
 import PySimpleGUI as sg
 import platform
+import qrcode
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -53,6 +54,9 @@ img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['1','3','3','7','6','9']
+img_qrCode = qrcode.make(chargerID)
+type(img_qrCode)
+img_qrCode.save("Pictures/QrCode.png")
 
 def GUI():
     sg.theme('Black')
