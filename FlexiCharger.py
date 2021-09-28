@@ -36,7 +36,7 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
-img_chargerID = get_img_data('Pictures/ChargerID.png')
+img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
