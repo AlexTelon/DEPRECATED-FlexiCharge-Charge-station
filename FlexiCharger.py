@@ -73,12 +73,12 @@ def GUI():
     
     IdLayout =    [
                     [  
-                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0)),
-                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0)),
-                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0))
+                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0), text_color='white')
                     ]
                 ]
 
@@ -88,7 +88,7 @@ def GUI():
                         ]
                     ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
 
@@ -96,7 +96,7 @@ def GUI():
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
     
-    return background_window,top_window,qr_window
+    return background_window, top_window, qr_window
 
 def refreshWindows(window_back, window_top, window_qr):
     window_back.refresh()
