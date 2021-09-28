@@ -36,12 +36,12 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
-img_chargerID = get_img_data('Pictures/chargerid.png')
+img_chargerID = get_img_data('Pictures/ChargerID.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
-img_authorizing = get_img_data('Pictures/authorizing.png')
-img_charging = get_img_data('Pictures/charging.png')
+img_authorizing = get_img_data('Pictures/Authorizing.png')
+img_charging = get_img_data('Pictures/Charging.png')
 img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
 img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
 img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
@@ -158,29 +158,10 @@ async def connect():
 def RFID():
     while True:
         reader = SimpleMFRC522()
-
-        print("To read tag press y, to write to tag press x")
-        val = input('Input action: ')
-
-        if val == "y":
-            try:
-                    print("Place tag on reader")
-                    id, text = reader.read()
-                    print("Tag ID:", id)
-                    print("Tag text:", text)
-            finally:
-                    GPIO.cleanup()
-        elif val == "x":
-            try:
-                    text = input('new data: ')
-                    print("Now place your tag to write")
-                    reader.write(text)
-                    print("written")
-            finally:
-                    GPIO.cleanup()
-        else:
-            print("Wrong action given")
-            GPIO.cleanup()
+        id, text = reader.read()
+        print("Tag ID:", id)
+        print("Tag text:", text)
+        GPIO.cleanup()
 
 if __name__ == '__main__':
     statemachine()
