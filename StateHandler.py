@@ -9,6 +9,7 @@ class States(Enum):
     S_AUTHORIZING = auto()
     S_CONNECTING = auto()
     S_CONNECTED = auto()
+    S_BUSY = auto()
 
 class StateHandler:
     def __init__(self):
