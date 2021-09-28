@@ -36,12 +36,12 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
-img_chargerID = get_img_data('Pictures/chargerid.png')
+img_chargerID = get_img_data('Pictures/Chargerid.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
-img_authorizing = get_img_data('Pictures/authorizing.png')
-img_charging = get_img_data('Pictures/charging.png')
+img_authorizing = get_img_data('Pictures/Authorizing.png')
+img_charging = get_img_data('Pictures/Charging.png')
 img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
 img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
 img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
@@ -68,16 +68,16 @@ def GUI():
     
     layout =    [
                     [   
-                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0)),
-                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0)),
-                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0)),
-                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0))
+                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0),text_color='white', background_color='black'),
+                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0),text_color='white', background_color='black'),
+                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0),text_color='white', background_color='black'),
+                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0),text_color='white', background_color='black'),
+                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0),text_color='white', background_color='black'),
+                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0),text_color='white', background_color='black')
                     ]
                 ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(27,703), keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(27,703), keep_on_top=True, grab_anywhere=False,background_color='black', no_titlebar=True).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
     return background_window,top_window
@@ -118,6 +118,8 @@ def statemachine():
                 window_back['IMAGE'].update(data=img_busy)
                 window_top.hide()
                 refreshWindows(window_back,window_top)
+                time.sleep(5)
+                state.set_state(States.S_PLUGINCABLE)
 
         #elif state.get_state() == States.S_CONNECTING:
        
@@ -127,7 +129,12 @@ def statemachine():
        
         #elif state.get_state() == States.S_AUTHORIZING:
        
-        #elif state.get_state() == States.S_PLUGINCABLE:
+        elif state.get_state() == States.S_PLUGINCABLE:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_plugInCable)
+                window_top.hide()
+                refreshWindows(window_back,window_top)
        
         else:
             window_back['IMAGE'].update(data=img_notAvailable)
