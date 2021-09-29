@@ -1,4 +1,5 @@
 import asyncio
+from multiprocessing.sharedctypes import Value
 import os
 import websockets
 import json
@@ -110,7 +111,7 @@ def statemachine(v):
      
     while True:
         print(state.get_state())
-        print(v)
+        print(v.value)
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
@@ -185,14 +186,22 @@ def RFID():
         GPIO.cleanup()
 
 def RFIDtest(v):
-    v.value = 1
+    while True:
+        v.value = v.value + 1
+        if v.value > 99:
+            v.value = 0
 
 
 if __name__ == '__main__':
     v = multiprocessing.Value('d', 0)
-    rfid = multiprocessing.Process(target=RFIDtest, args=(v))
-    state = multiprocessing.Process(target=statemachine, args=(v))
+    rfid = multiprocessing.Process(target=RFIDtest, args=(v,))
+    state = multiprocessing.Process(target=statemachine, args=(v,))
 
+    state.start()
+    rfid.start()
+
+    state.join()
+    rfid.join()
     #statemachine()
     #gui = Process(target=GUI)
     #gui.start()
