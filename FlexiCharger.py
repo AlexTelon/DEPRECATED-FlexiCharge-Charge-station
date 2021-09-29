@@ -129,8 +129,10 @@ def statemachine(v):
                 window_top.UnHide()
                 window_qr.UnHide()
                 refreshWindows(window_back,window_top, window_qr)
-                time.sleep(5)
-                state.set_state(States.S_BUSY)
+                #time.sleep(5)
+                #state.set_state(States.S_BUSY)
+            if v.value > 8:
+                state.set_state(States.S_AUTHORIZING)
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -146,7 +148,13 @@ def statemachine(v):
        
         #elif state.get_state() == States.S_DISPLAYID:
        
-        #elif state.get_state() == States.S_AUTHORIZING:
+        elif state.get_state() == States.S_AUTHORIZING:
+             if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_authorizing)
+                window_top.hide()
+                window_qr.hide()
+                refreshWindows(window_back,window_top, window_qr)
        
         #elif state.get_state() == States.S_PLUGINCABLE:
        
@@ -188,7 +196,8 @@ def RFID():
 def RFIDtest(v):
     while True:
         v.value = v.value + 1
-        if v.value > 99:
+        time.sleep(1)
+        if v.value > 10:
             v.value = 0
 
 
