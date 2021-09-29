@@ -57,9 +57,18 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 chargerID = list()
 
 
-
+#please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
-    img_qrCodeGenerated = qrcode.make(chargerID)
+    qr = qrcode.QRCode(
+        version=8,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=5,
+        border=4,
+    )
+    qr.add_data(chargerID)
+    qr.make(fit=True)
+    img_qrCodeGenerated = qr.make_image(fill_color="black", back_color="white")
+    #img_qrCodeGenerated = qrcode.make(chargerID)
     type(img_qrCodeGenerated)
     img_qrCodeGenerated.save("Pictures/QrCode.png")
 
@@ -89,7 +98,7 @@ def GUI():
 
     qrCodeLayout =  [
                         [   
-                            sg.Image(data=img_qrCode, key='QRCODE', size=(280,280)) 
+                            sg.Image(data=img_qrCode, key='QRCODE', size=(285,285)) 
                         ]
                     ]
 
