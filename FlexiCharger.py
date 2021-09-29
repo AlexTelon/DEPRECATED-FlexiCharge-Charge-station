@@ -58,7 +58,7 @@ chargerID = list()
 
 
 
-def QR():
+def generateQR():
     img_qrCodeGenerated = qrcode.make(chargerID)
     type(img_qrCodeGenerated)
     img_qrCodeGenerated.save("Pictures/QrCode.png")
@@ -129,7 +129,7 @@ def statemachine():
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                QR()
+                generateQR()
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
                 window_qr.UnHide()
