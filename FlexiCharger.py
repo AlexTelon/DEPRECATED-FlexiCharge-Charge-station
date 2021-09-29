@@ -18,7 +18,6 @@ if platform.system() != 'Windows':
     from mfrc522 import SimpleMFRC522
 
 from PIL import Image, ImageTk
-from multiprocessing import Process
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, Location, RegistrationStatus
@@ -104,13 +103,14 @@ def refreshWindows(window_back, window_top, window_qr):
     window_top.refresh()
     window_qr.refresh()
 
-def statemachine():
+def statemachine(v):
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
      
     while True:
         print(state.get_state())
+        print(v)
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
@@ -184,8 +184,16 @@ def RFID():
         print("Tag text:", text)
         GPIO.cleanup()
 
+def RFIDtest(v):
+    v.value = 1
+
+
 if __name__ == '__main__':
-    statemachine()
+    v = multiprocessing.Value('d', 0)
+    rfid = multiprocessing.Process(target=RFIDtest, args=(v))
+    state = multiprocessing.Process(target=statemachine, args=(v))
+
+    #statemachine()
     #gui = Process(target=GUI)
     #gui.start()
 
