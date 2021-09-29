@@ -52,6 +52,7 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
+img_busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['1','3','3','7','6','9']
 
@@ -133,7 +134,7 @@ def statemachine():
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_followInstructions)
+                window_back['IMAGE'].update(data=img_busy)
                 window_top.hide()
                 window_qr.hide()
                 refreshWindows(window_back,window_top, window_qr)
