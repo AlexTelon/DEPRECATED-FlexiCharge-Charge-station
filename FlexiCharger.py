@@ -37,6 +37,7 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
+
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
@@ -53,13 +54,17 @@ img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
 
-chargerID = ['1','3','3','7','6','9']
+chargerID = list()
 
-img_qrCodeGenerated = qrcode.make(chargerID)
-type(img_qrCodeGenerated)
-img_qrCodeGenerated.save("Pictures/QrCode.png")
+
+
+def QR():
+    img_qrCodeGenerated = qrcode.make(chargerID)
+    type(img_qrCodeGenerated)
+    img_qrCodeGenerated.save("Pictures/QrCode.png")
 
 def GUI():
+    global chargerID
     sg.theme('Black')
     
     background_image =  [
@@ -104,6 +109,7 @@ def refreshWindows(window_back, window_top, window_qr):
     window_qr.refresh()
 
 def statemachine():
+    asyncio.get_event_loop().run_until_complete(connect())
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
@@ -123,6 +129,7 @@ def statemachine():
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
+                QR()
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
                 window_qr.UnHide()
@@ -153,12 +160,32 @@ def statemachine():
             window_back.refresh()
 
 async def connect():
-    url = "ws://localhost:9000/CP_Carl"
+    url = "ws://54.220.194.65:1337/123abc"
     global state
+    global chargerID
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
             #print("Connected.")
+            pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
+            "chargePointVendor": "AVT-Company",
+            "chargePointModel": "AVT-Express",
+            "chargePointSerialNumber": "avt.001.13.1",
+            "chargeBoxSerialNumber": "avt.001.13.1.01",
+            "firmwareVersion": "0.9.87",
+            "iccid": "",
+            "imsi": "",
+            "meterType": "AVT NQC-ACDC",
+            "meterSerialNumber": "avt.001.13.1.01" } ]
+            pkg_send = json.dumps(pkg)
+            await websocket.send(pkg_send)
+            resp = await websocket.recv()
+            resp_parsed = json.loads(resp)
+            print(resp_parsed[2]['chargerID'])
+            temp = resp_parsed[2]['chargerID']
+            chargerID = list(str(temp))
+            
+
             x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
             y = json.dumps(x)
             await websocket.send(y)
@@ -173,7 +200,6 @@ async def connect():
                 print("Disconnected.")
     except:
         state.set_state(States.S_AVAILABLE)
-
 
 def RFID():
     while True:
