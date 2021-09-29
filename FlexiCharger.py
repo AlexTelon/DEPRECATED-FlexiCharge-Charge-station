@@ -7,6 +7,7 @@ import multiprocessing
 import io
 import PySimpleGUI as sg
 import platform
+import qrcode
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -36,7 +37,7 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
-img_chargerID = get_img_data('Pictures/Chargerid.png')
+img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
@@ -50,9 +51,13 @@ img_fullyCharged = get_img_data('Pictures/FullyCharged.png')
 img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
-img_busy = get_img_data('Pictures/Busy.png')
+img_qrCode = get_img_data('Pictures/QrCode.png')
 
 chargerID = ['1','3','3','7','6','9']
+
+img_qrCodeGenerated = qrcode.make(chargerID)
+type(img_qrCodeGenerated)
+img_qrCodeGenerated.save("Pictures/QrCode.png")
 
 def GUI():
     sg.theme('Black')
@@ -66,28 +71,40 @@ def GUI():
         background_window.Maximize()
     background_window.TKroot["cursor"] = "none"
     
-    layout =    [
-                    [   
-                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0),text_color='white', background_color='black'),
-                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0),text_color='white', background_color='black'),
-                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0),text_color='white', background_color='black'),
-                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0),text_color='white', background_color='black'),
-                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0),text_color='white', background_color='black'),
-                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0),text_color='white', background_color='black')
+    IdLayout =    [
+                    [  
+                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0), text_color='white')
                     ]
                 ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(27,703), keep_on_top=True, grab_anywhere=False,background_color='black', no_titlebar=True).finalize()
+    qrCodeLayout =  [
+                        [   
+                            sg.Image(data=img_qrCode, key='QRCODE', size=(280,280)) 
+                        ]
+                    ]
+
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
-    return background_window,top_window
 
-def refreshWindows(window_back, window_top):
+    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(115, 182) bildstorlek 250x250 från början
+    qr_window.TKroot["cursor"] = "none"
+    qr_window.hide()
+    
+    return background_window, top_window, qr_window
+
+def refreshWindows(window_back, window_top, window_qr):
     window_back.refresh()
     window_top.refresh()
+    window_qr.refresh()
 
 def statemachine():
-    window_back,window_top = GUI()
+    window_back, window_top, window_qr = GUI()
     global state
     global lastState
      
@@ -101,25 +118,25 @@ def statemachine():
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
-                refreshWindows(window_back,window_top)
+                refreshWindows(window_back,window_top, window_qr)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
-                refreshWindows(window_back,window_top)
+                window_qr.UnHide()
+                refreshWindows(window_back,window_top, window_qr)
                 time.sleep(5)
                 state.set_state(States.S_BUSY)
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_busy)
+                window_back['IMAGE'].update(data=img_followInstructions)
                 window_top.hide()
-                refreshWindows(window_back,window_top)
-                time.sleep(5)
-                state.set_state(States.S_PLUGINCABLE)
+                window_qr.hide()
+                refreshWindows(window_back,window_top, window_qr)
 
         #elif state.get_state() == States.S_CONNECTING:
        
@@ -129,12 +146,7 @@ def statemachine():
        
         #elif state.get_state() == States.S_AUTHORIZING:
        
-        elif state.get_state() == States.S_PLUGINCABLE:
-            if lastState.get_state() != state.get_state():
-                lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_plugInCable)
-                window_top.hide()
-                refreshWindows(window_back,window_top)
+        #elif state.get_state() == States.S_PLUGINCABLE:
        
         else:
             window_back['IMAGE'].update(data=img_notAvailable)
@@ -166,29 +178,10 @@ async def connect():
 def RFID():
     while True:
         reader = SimpleMFRC522()
-
-        print("To read tag press y, to write to tag press x")
-        val = input('Input action: ')
-
-        if val == "y":
-            try:
-                    print("Place tag on reader")
-                    id, text = reader.read()
-                    print("Tag ID:", id)
-                    print("Tag text:", text)
-            finally:
-                    GPIO.cleanup()
-        elif val == "x":
-            try:
-                    text = input('new data: ')
-                    print("Now place your tag to write")
-                    reader.write(text)
-                    print("written")
-            finally:
-                    GPIO.cleanup()
-        else:
-            print("Wrong action given")
-            GPIO.cleanup()
+        id, text = reader.read()
+        print("Tag ID:", id)
+        print("Tag text:", text)
+        GPIO.cleanup()
 
 if __name__ == '__main__':
     statemachine()
