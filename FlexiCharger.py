@@ -130,8 +130,6 @@ def statemachine():
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
-           asyncio.get_event_loop().run_until_complete(reserveNow())
-       
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
@@ -180,11 +178,15 @@ def statemachine():
             window_back.refresh()
 
 async def reserveNow():
+    global state
     async with websockets.connect(url) as websocket:
         try:
+            #Remove for using the app
             tempj = [0]
             tempj_send = json.dumps(tempj)
             await websocket.send(tempj_send)
+            #end of remove
+
             res = await websocket.recv()
             res_pared = json.loads(res)
             temp = res_pared[2]["idTag"]
@@ -192,7 +194,7 @@ async def reserveNow():
         
             pkg_accepted = [1, "Accepted"]
             pkg_accepted_send = json.dumps(pkg_accepted)
-            await websockets.send(pkg_accepted_send)
+            await websocket.send(pkg_accepted_send)
             print ("busy")
             state.set_state(States.S_BUSY)
         except:
