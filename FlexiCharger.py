@@ -57,10 +57,8 @@ img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
 
-chargerID = list()
-url = "ws://54.220.194.65:1337/123abc"
-
-
+chargerID = ['0','0','0','0','0','0']
+url = "ws://54.220.194.65:1337/ssb"
 
 #please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
@@ -107,11 +105,11 @@ def GUI():
                         ]
                     ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
 
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
+    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
     
@@ -123,8 +121,6 @@ def refreshWindows(window_back, window_top, window_qr):
     window_qr.refresh()
 
 def statemachine():
-    asyncio.get_event_loop().run_until_complete(connect())
-    asyncio.get_event_loop().run_until_complete(reserveNow())
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
@@ -134,6 +130,7 @@ def statemachine():
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
+           asyncio.get_event_loop().run_until_complete(reserveNow())
        
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -144,6 +141,12 @@ def statemachine():
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
+                window_top['ID0'].update(chargerID[0])
+                window_top['ID1'].update(chargerID[1])
+                window_top['ID2'].update(chargerID[2])
+                window_top['ID3'].update(chargerID[3])
+                window_top['ID4'].update(chargerID[4])
+                window_top['ID5'].update(chargerID[5])
                 generateQR()
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
@@ -177,10 +180,6 @@ def statemachine():
             window_back.refresh()
 
 async def reserveNow():
- 
-    global url
-    print("Luks")
-    
     try:
         async with websockets.connect(url) as websocket:
            try:
@@ -194,19 +193,15 @@ async def reserveNow():
         
                 pkg_accepted = [1, "Accepted"]
                 pkg_accepted_send = json.dumps(pkg_accepted)
-                print("innan send")
                 await websockets.send(pkg_accepted_send)
-                print("efter send")
                 state.set_state(States.S_BUSY)
            except:
-                print("vafan luks")
                 pkg_rejected = [1, "Rejected"]
                 pkg_rejected_send = json.dumps(pkg_rejected)
                 await websocket.send(pkg_rejected_send)
                 state.set_state(States.S_AVAILABLE)
 
     except:
-        print("ojdå")
         state.set_state(States.S_AVAILABLE)
         
 
