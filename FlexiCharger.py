@@ -180,33 +180,28 @@ def statemachine():
             window_back.refresh()
 
 async def reserveNow():
-    try:
-        async with websockets.connect(url) as websocket:
-           try:
-                tempj = [0]
-                tempj_send = json.loads(tempj)
-                await websocket.send(tempj_send)
-                res = await websocket.recv()
-                res_pared = json.loads(res)
-                temp = res_pared[2]["idTag"]
-                print (temp)
+    async with websockets.connect(url) as websocket:
+        try:
+            tempj = [0]
+            tempj_send = json.dumps(tempj)
+            await websocket.send(tempj_send)
+            res = await websocket.recv()
+            res_pared = json.loads(res)
+            temp = res_pared[2]["idTag"]
+            print (temp)
         
-                pkg_accepted = [1, "Accepted"]
-                pkg_accepted_send = json.dumps(pkg_accepted)
-                await websockets.send(pkg_accepted_send)
-                state.set_state(States.S_BUSY)
-           except:
-                pkg_rejected = [1, "Rejected"]
-                pkg_rejected_send = json.dumps(pkg_rejected)
-                await websocket.send(pkg_rejected_send)
-                state.set_state(States.S_AVAILABLE)
+            pkg_accepted = [1, "Accepted"]
+            pkg_accepted_send = json.dumps(pkg_accepted)
+            await websockets.send(pkg_accepted_send)
+            print ("busy")
+            state.set_state(States.S_BUSY)
+        except:
+            pkg_rejected = [1, "Rejected"]
+            pkg_rejected_send = json.dumps(pkg_rejected)
+            await websocket.send(pkg_rejected_send)
+            state.set_state(States.S_AVAILABLE)
 
-    except:
-        state.set_state(States.S_AVAILABLE)
         
-
-
-
 
 async def connect():
     global url
