@@ -56,7 +56,6 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
-img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
@@ -181,34 +180,28 @@ def statemachine():
             window_back.refresh()
 
 async def reserveNow():
-    global state
     async with websockets.connect(url) as websocket:
         try:
             tempj = [0]
-            print(tempj)
             tempj_send = json.dumps(tempj)
             await websocket.send(tempj_send)
             res = await websocket.recv()
-            print(res)
             res_pared = json.loads(res)
             temp = res_pared[2]["idTag"]
             print (temp)
         
             pkg_accepted = [1, "Accepted"]
             pkg_accepted_send = json.dumps(pkg_accepted)
-            await websocket.send(pkg_accepted_send)
-            print(state.get_state())
+            await websockets.send(pkg_accepted_send)
+            print ("busy")
             state.set_state(States.S_BUSY)
         except:
             pkg_rejected = [1, "Rejected"]
             pkg_rejected_send = json.dumps(pkg_rejected)
             await websocket.send(pkg_rejected_send)
             state.set_state(States.S_AVAILABLE)
-            print("except")
+
         
-
-
-
 
 async def connect():
     global url
