@@ -1,5 +1,8 @@
 import asyncio
+from asyncio.events import get_event_loop
+from asyncio.windows_events import NULL
 import os
+from asyncio.base_events import _run_until_complete_cb
 import websockets
 import json
 import time
@@ -55,6 +58,8 @@ img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
 
 chargerID = list()
+url = "ws://54.220.194.65:1337/123abc"
+
 
 
 #please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
@@ -106,7 +111,7 @@ def GUI():
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
 
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(115, 182) bildstorlek 250x250 från början
+    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
     
@@ -119,12 +124,13 @@ def refreshWindows(window_back, window_top, window_qr):
 
 def statemachine():
     asyncio.get_event_loop().run_until_complete(connect())
+    asyncio.get_event_loop().run_until_complete(reserveNow())
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
      
     while True:
-        print(state.get_state())
+        #print(state.get_state())
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
@@ -143,8 +149,10 @@ def statemachine():
                 window_top.UnHide()
                 window_qr.UnHide()
                 refreshWindows(window_back,window_top, window_qr)
+                
                 time.sleep(5)
                 state.set_state(States.S_BUSY)
+            asyncio.get_event_loop().run_until_complete(reserveNow())
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -168,14 +176,51 @@ def statemachine():
             window_back['IMAGE'].update(data=img_notAvailable)
             window_back.refresh()
 
+async def reserveNow():
+ 
+    global url
+    print("Luks")
+    
+    try:
+        async with websockets.connect(url) as websocket:
+           try:
+                tempj = [0]
+                tempj_send = json.loads(tempj)
+                await websocket.send(tempj_send)
+                res = await websocket.recv()
+                res_pared = json.loads(res)
+                temp = res_pared[2]["idTag"]
+                print (temp)
+        
+                pkg_accepted = [1, "Accepted"]
+                pkg_accepted_send = json.dumps(pkg_accepted)
+                print("innan send")
+                await websockets.send(pkg_accepted_send)
+                print("efter send")
+                state.set_state(States.S_BUSY)
+           except:
+                print("vafan luks")
+                pkg_rejected = [1, "Rejected"]
+                pkg_rejected_send = json.dumps(pkg_rejected)
+                await websocket.send(pkg_rejected_send)
+                state.set_state(States.S_AVAILABLE)
+
+    except:
+        print("ojdå")
+        state.set_state(States.S_AVAILABLE)
+        
+
+
+
+
 async def connect():
-    url = "ws://54.220.194.65:1337/123abc"
+    global url
     global state
     global chargerID
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
-            #print("Connected.")
+            print("Connected.")
             pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
             "chargePointVendor": "AVT-Company",
             "chargePointModel": "AVT-Express",
@@ -190,8 +235,8 @@ async def connect():
             await websocket.send(pkg_send)
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerID'])
-            temp = resp_parsed[2]['chargerID']
+            print(resp_parsed[2]['chargerId'])
+            temp = resp_parsed[2]['chargerId']
             chargerID = list(str(temp))
             
 
