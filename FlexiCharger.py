@@ -163,7 +163,7 @@ def statemachine(v):
             window_back.refresh()
 
 async def connect():
-    url = "ws://localhost:9000/CP_Carl"
+    url = "ws://54.220.194.65:1337/ssb"
     global state
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
