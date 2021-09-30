@@ -193,7 +193,12 @@ async def reserveNow():
             temp = res_pared[2]["idTag"]
             print(temp)
 
-            pkg_accepted = [1, "Accepted"]
+            pkg_accepted = [3,
+                "uniqueID",
+                "ReserveNow",
+                { 
+                "status": "Accepted"
+                                } ]
             pkg_accepted_send = json.dumps(pkg_accepted)
             await websocket.send(pkg_accepted_send)
             state.set_state(States.S_BUSY)
