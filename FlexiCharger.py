@@ -189,11 +189,10 @@ async def reserveNow():
 
             res = await websocket.recv()
             res_pared = json.loads(res)
-            temp = res_pared[2]["idTag"]
-            print(temp)
+            print(res_pared)
 
             pkg_accepted = [3,
-                "uniqueID",
+                res_pared[1],
                 "ReserveNow",
                 { 
                 "status": "Accepted"
