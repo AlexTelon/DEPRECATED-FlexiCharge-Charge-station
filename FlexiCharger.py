@@ -56,6 +56,7 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
+img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
@@ -126,11 +127,8 @@ def statemachine():
     global lastState
      
     while True:
-        #print(state.get_state())
-
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
-           asyncio.get_event_loop().run_until_complete(reserveNow())
        
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -152,18 +150,19 @@ def statemachine():
                 window_top.UnHide()
                 window_qr.UnHide()
                 refreshWindows(window_back,window_top, window_qr)
-                
                 time.sleep(5)
-                state.set_state(States.S_BUSY)
             asyncio.get_event_loop().run_until_complete(reserveNow())
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_followInstructions)
+                window_back['IMAGE'].update(data=img_Busy)
                 window_top.hide()
                 window_qr.hide()
                 refreshWindows(window_back,window_top, window_qr)
+
+                time.sleep(7)
+                state.set_state(States.S_AVAILABLE)
 
         #elif state.get_state() == States.S_CONNECTING:
        
@@ -180,28 +179,29 @@ def statemachine():
             window_back.refresh()
 
 async def reserveNow():
+    global state
     async with websockets.connect(url) as websocket:
         try:
+            #Remove for using the app
             tempj = [0]
             tempj_send = json.dumps(tempj)
             await websocket.send(tempj_send)
+            #end of remove
+
             res = await websocket.recv()
             res_pared = json.loads(res)
             temp = res_pared[2]["idTag"]
-            print (temp)
-        
+            print(temp)
+
             pkg_accepted = [1, "Accepted"]
             pkg_accepted_send = json.dumps(pkg_accepted)
-            await websockets.send(pkg_accepted_send)
-            print ("busy")
+            await websocket.send(pkg_accepted_send)
             state.set_state(States.S_BUSY)
         except:
             pkg_rejected = [1, "Rejected"]
             pkg_rejected_send = json.dumps(pkg_rejected)
             await websocket.send(pkg_rejected_send)
             state.set_state(States.S_AVAILABLE)
-
-        
 
 async def connect():
     global url
