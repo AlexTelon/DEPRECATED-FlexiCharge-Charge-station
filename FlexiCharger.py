@@ -1,4 +1,5 @@
 import asyncio
+import ctypes
 from multiprocessing.sharedctypes import Value
 import os
 import websockets
@@ -104,14 +105,13 @@ def refreshWindows(window_back, window_top, window_qr):
     window_top.refresh()
     window_qr.refresh()
 
-def statemachine(v):
+def statemachine(isTagRead,rfidCardId):
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
      
     while True:
-        print(state.get_state())
-        print(v.value)
+        #print(state.get_state())
 
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
@@ -131,7 +131,7 @@ def statemachine(v):
                 refreshWindows(window_back,window_top, window_qr)
                 #time.sleep(5)
                 #state.set_state(States.S_BUSY)
-            if v.value > 8:
+            if isTagRead.value == True:
                 state.set_state(States.S_AUTHORIZING)
 
         elif state.get_state() == States.S_BUSY:
@@ -152,6 +152,7 @@ def statemachine(v):
              if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_authorizing)
+                print(rfidCardId.value)
                 window_top.hide()
                 window_qr.hide()
                 refreshWindows(window_back,window_top, window_qr)
@@ -185,26 +186,29 @@ async def connect():
         state.set_state(States.S_AVAILABLE)
 
 
-def RFID():
+def RFID(isTagRead,rfidCardId):
     while True:
         reader = SimpleMFRC522()
-        id, text = reader.read()
-        print("Tag ID:", id)
+        rfidCardId.value, text = reader.read()
+        isTagRead.value = True
+        print("Tag ID:", rfidCardId)
         print("Tag text:", text)
         GPIO.cleanup()
 
-def RFIDtest(v):
+def RFIDtest(isTagRead,rfidCardId):
     while True:
-        v.value = v.value + 1
-        time.sleep(1)
-        if v.value > 10:
-            v.value = 0
+        time.sleep(10)
+        isTagRead.value = True
+        rfidCardId.value = b"DETHARAREN20LANGTORD"
+            
 
 
 if __name__ == '__main__':
-    v = multiprocessing.Value('d', 0)
-    rfid = multiprocessing.Process(target=RFIDtest, args=(v,))
-    state = multiprocessing.Process(target=statemachine, args=(v,))
+    isTagRead = multiprocessing.Value('i', False)
+    rfidCardId = multiprocessing.Array('c', 20)
+
+    rfid = multiprocessing.Process(target=RFIDtest, args=(isTagRead, rfidCardId))
+    state = multiprocessing.Process(target=statemachine, args=(isTagRead, rfidCardId))
 
     state.start()
     rfid.start()
