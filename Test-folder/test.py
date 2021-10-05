@@ -31,6 +31,34 @@ async def send_heartbeat(ws):
         await asyncio.sleep(2)
 
 
+async def reserveNow(websocket):
+        try:
+            tempj = [0]
+            tempj_send = json.dumps(tempj)
+            await websocket.send(tempj_send)
+
+            res = await websocket.recv()
+            res_parsed = json.loads(res)
+            print(res_parsed)
+            
+            pkg_accepted = [3,
+                res_parsed[1],
+                "ReserveNow",
+                { 
+                "status": "Accepted"
+                                   } ]
+            pkg_accepted_send = json.dumps(pkg_accepted)
+            await websocket.send(pkg_accepted_send)
+        
+            return True, res_parsed[3]['expiryDate']
+            
+        except:
+            pkg_rejected = [1, "Rejected"]
+            pkg_rejected_send = json.dumps(pkg_rejected)
+            await websocket.send(pkg_rejected_send)
+            return False, 0
+            
+        
 async def connect():
     url = "ws://54.220.194.65:1337/ssb"
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
@@ -57,29 +85,16 @@ async def connect():
         #print(l)
         print(resp_parsed)
         
-        tempj = [0]
-        tempj_send = json.dumps(tempj)
-        await websocket.send(tempj_send)
-
-        res = await websocket.recv()
-        res_parsed = json.loads(res)
-        print(res_parsed)
-        #print(res_parsed[3]['expiryDate'] / 1000)
-        expiryDate = res_parsed[3]['expiryDate'] / 1000
         
-        expire = uc.convertUnixToLocal(expiryDate)
-        print(expire.strftime('%Y-%m-%d %H:%M:%S'))
+        boolean, expiryDate = await reserveNow(websocket)
         
-
-        pkg_accepted = [3,
-            res_parsed[1],
-            "ReserveNow",
-            { 
-            "status": "Accepted"
-                               } ]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-
+        if boolean:
+            expiryDate = expiryDate / 1000 # Server sends in seconds, need milliseconds.
+            expire = uc.convertUnixToLocal(expiryDate) # Convert time using UnixConverter.
+            print(expire.strftime('%Y-%m-%d %H:%M:%S')) # Format time using strftime().
+        else:
+            print("sadge")
+            
         return 0
         
         
@@ -186,3 +201,5 @@ nest_asyncio.apply()
 
 state = StateHandler()
 loop.run_until_complete(connect())
+
+# uwu daddy
