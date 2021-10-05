@@ -17,6 +17,7 @@ from ocpp.v16 import call_result, call
 
 from StateHandler import States
 from StateHandler import StateHandler
+from DateHandler import DateHandler
 
 loop = asyncio.get_event_loop()
 
@@ -144,7 +145,7 @@ async def statemachine():
 
 
 async def main():
-    url = "ws://localhost:9000/knaskalas"
+    url = "ws://54.220.194.65:1337/ssb"
     global loop
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
         tasks = [
