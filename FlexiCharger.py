@@ -205,7 +205,7 @@ def RFIDtest(isTagRead,rfidCardId):
 
 
 
-def chargingsTatus():
+"""def chargingsTatus():
     #window = GUI()
     x=0
     while x < 10:
@@ -240,7 +240,7 @@ def countdown(num_of_secs):
         top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(25,510),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
         top_window.TKroot["cursor"] = "none"
         time.sleep(1)
-            
+"""            
 
 
 if __name__ == '__main__':
