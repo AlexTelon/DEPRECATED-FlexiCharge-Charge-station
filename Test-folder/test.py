@@ -133,15 +133,6 @@ async def connect():
         await websocket.send(y)
         print("Response: " + await websocket.recv())
 
-        #while True:
-        #    hb = [2, "knaskalas", "Heartbeat", {}]
-        #    z = json.dumps(hb)
-        #    print("Sending Heartbeat...")
-        #    await websocket.send(z)
-        #    print("Response: " + await websocket.recv())
-        #    time.sleep(3)
-
-
 
 async def statemachine():
     while True:
