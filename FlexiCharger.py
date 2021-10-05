@@ -8,18 +8,6 @@ import io
 import PySimpleGUI as sg
 import platform
 
-<<<<<<< Updated upstream
-from StateHandler import States
-from StateHandler import StateHandler
-
-if platform.system() != 'Windows':
-    import RPi.GPIO as GPIO
-
-    from mfrc522 import SimpleMFRC522
-
-from PIL import Image, ImageTk
-from multiprocessing import Process
-=======
 # from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
@@ -30,7 +18,6 @@ import io
 import PySimpleGUI as sg
 import platform
 import qrcode
->>>>>>> Stashed changes
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, Location, RegistrationStatus
@@ -38,8 +25,6 @@ from ocpp.v16 import call_result, call
 from PIL import Image, ImageTk
 from multiprocessing import Process
 
-<<<<<<< Updated upstream
-=======
 from StateHandler import States
 from StateHandler import StateHandler
 
@@ -49,7 +34,6 @@ if platform.system() != 'Windows':
     from mfrc522 import SimpleMFRC522
 
 
->>>>>>> Stashed changes
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
     img.thumbnail(maxsize)
@@ -57,8 +41,6 @@ def get_img_data(f, maxsize=(480, 800)):
     img.save(bio, format="PNG")
     del img
     return bio.getvalue()
-<<<<<<< Updated upstream
-=======
 
 state = StateHandler()
 lastState = StateHandler()
@@ -223,7 +205,6 @@ async def connect(websocket):
         #    await websocket.send(z)
         #    print("Response: " + await websocket.recv())
         #    time.sleep(3)
->>>>>>> Stashed changes
 
 state = StateHandler()
 lastState = StateHandler()
@@ -274,15 +255,6 @@ def GUI():
     top_window.hide()
     return background_window,top_window
 
-<<<<<<< Updated upstream
-
-async def statemachine():
-    window_back,window_top = GUI()
-    url = "ws://localhost:9000/CP_Carl"
-    global state
-    global lastState
-     
-=======
 async def reserveNow(websocket):
     global state
     
@@ -318,56 +290,10 @@ async def statemachine(websocket):
     global state
     global lastState
     global chargerID
->>>>>>> Stashed changes
     while True:
         print(state.get_state())
 
         if state.get_state() == States.S_STARTUP:
-<<<<<<< Updated upstream
-            try:
-                async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-                    state.set_state(States.S_AVAILABLE)
-                    #print("Connected.")
-                    x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
-                    y = json.dumps(x)
-                    await websocket.send(y)
-                    try:
-                        x = [2, "CP_Carl", "Heartbeat", {}]
-                        y = json.dumps(x)
-                        #print("Sending heartbeat.")
-                        await websocket.send(y)
-                        time.sleep(3)
-                        await websocket.recv()
-                    except websockets.ConnectionClosed:
-                        print("Disconnected.")
-            except:
-                state.set_state(States.S_AVAILABLE)
-       
-        elif state.get_state() == States.S_AVAILABLE:
-            if lastState.get_state() != state.get_state():
-                lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_chargerID)
-                window_back.refresh()
-                window_top.UnHide()
-       
-        elif state.get_state() == States.S_NOTAVAILABLE:
-            window_back['IMAGE'].update(data=img_notAvailable)
-            window_back.refresh()
-       
-        #elif state.get_state() == States.CONNECTING:
-       
-        #elif state.get_state() == States.CONNECTED:
-       
-        #elif state.get_state() == States.DISPLAYID:
-       
-        #elif state.get_state() == States.AUTHORIZING:
-       
-        #elif state.get_state() == States.PLUGINCABLE:
-       
-        else:
-            window_back['IMAGE'].update(data=img_notAvailable)
-            window_back.refresh()
-=======
             print("Starting up...")
             asyncio.get_event_loop().run_until_complete(connect(websocket))
             # Only for temporary testing purposes:
@@ -434,7 +360,6 @@ async def statemachine(websocket):
 
         elif state.get_state() == States.S_PLUGINCABLE:
             pass
->>>>>>> Stashed changes
 
 async def connect():
     url = "ws://localhost:9000/CP_Carl"
@@ -492,10 +417,6 @@ if __name__ == '__main__':
     #gui = Process(target=GUI)
     #gui.start()
 
-<<<<<<< Updated upstream
-    #OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
-    #OCPP.start()
-=======
 async def main():
     global url
     global loop
@@ -507,7 +428,6 @@ async def main():
 
         ]
         loop.run_until_complete(asyncio.wait(tasks))
->>>>>>> Stashed changes
 
     #if platform.system() != 'Windows':
     #    rfid = Process(target=RFID)
