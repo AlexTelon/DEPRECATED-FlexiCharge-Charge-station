@@ -12,6 +12,7 @@ import io
 import PySimpleGUI as sg
 import platform
 import qrcode
+import nest_asyncio
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -40,7 +41,6 @@ state = StateHandler()
 lastState = StateHandler()
 loop = asyncio.get_event_loop()
 sg.Window._move_all_windows = True
-websocket = NULL
 
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
@@ -118,25 +118,26 @@ def GUI():
     
     return background_window, top_window, qr_window
 
-def refreshWindows(window_back, window_top, window_qr):
+window_back, window_top, window_qr = GUI()
+
+def refreshWindows():
+    global window_back, window_top, window_qr
     window_back.refresh()
     window_top.refresh()
     window_qr.refresh()
 
-def statemachine():
-    window_back, window_top, window_qr = GUI()
-    global state
-    global lastState
-     
+async def statemachine(websocket):
+    global window_back, window_top, window_qr, state, lastState 
+
     while True:
         if state.get_state() == States.S_STARTUP:
-           asyncio.get_event_loop().run_until_complete(connect())
-       
+            #asyncio.get_event_loop().run_until_complete(connect())
+            pass
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
-                refreshWindows(window_back,window_top, window_qr)
+                refreshWindows()
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -151,9 +152,9 @@ def statemachine():
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
                 window_qr.UnHide()
-                refreshWindows(window_back,window_top, window_qr)
+                refreshWindows()
                 time.sleep(5)
-            asyncio.get_event_loop().run_until_complete(reserveNow())
+                asyncio.get_event_loop().run_until_complete(reserveNow(websocket))
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -161,10 +162,10 @@ def statemachine():
                 window_back['IMAGE'].update(data=img_Busy)
                 window_top.hide()
                 window_qr.hide()
-                refreshWindows(window_back,window_top, window_qr)
+                refreshWindows()
 
-                time.sleep(7)
-                state.set_state(States.S_AVAILABLE)
+                #time.sleep(7)
+                #state.set_state(States.S_AVAILABLE)
 
         #elif state.get_state() == States.S_CONNECTING:
        
@@ -180,39 +181,50 @@ def statemachine():
             window_back['IMAGE'].update(data=img_notAvailable)
             window_back.refresh()
 
-async def reserveNow():
+async def authorize(idTag):
+    x = [2, "ssb", "Authorize", {"idTag": "B4A63CDF"}]
+    y = json.dumps(x)
+    await websocket.send(y)
+    response = await websocket.recv()
+
+async def send_heartbeat():
+    while True:
+        hb = [2, "ssb", "Heartbeat", {}]
+        z = json.dumps(hb)
+        print("Sending Heartbeat...")
+        await websocket.send(z)
+        print(await websocket.recv())
+        await asyncio.sleep(2)
+
+async def reserveNow(websocket):
     global state
-    async with websockets.connect(url) as websocket:
-        try:
-            #Remove for using the app
-            tempj = [0]
-            tempj_send = json.dumps(tempj)
-            await websocket.send(tempj_send)
-            #end of remove
+    try:
+        #Remove for using the app
+        tempj = [0]
+        tempj_send = json.dumps(tempj)
+        await websocket.send(tempj_send)
+        #end of remove
 
-            res = await websocket.recv()
-            res_pared = json.loads(res)
-            temp = res_pared[2]["idTag"]
-            print(temp)
+        res = await websocket.recv()
+        res_pared = json.loads(res)
+        print(res_pared)
 
-            pkg_accepted = [1, "Accepted"]
-            pkg_accepted_send = json.dumps(pkg_accepted)
-            await websocket.send(pkg_accepted_send)
-            state.set_state(States.S_BUSY)
-        except:
-            pkg_rejected = [1, "Rejected"]
-            pkg_rejected_send = json.dumps(pkg_rejected)
-            await websocket.send(pkg_rejected_send)
-            state.set_state(States.S_AVAILABLE)
+        pkg_accepted = [3, res_pared[1], "ReserveNow", {"status": "Accepted"}]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+        state.set_state(States.S_BUSY)
+    except:
+        pkg_rejected = [3, res_pared[1], "ReserveNow", {"status": "Rejected"}]
+        pkg_rejected_send = json.dumps(pkg_rejected)
+        await websocket.send(pkg_rejected_send)
+        #state.set_state(States.S_AVAILABLE)
 
 async def connect():
     global url
     global state
     global chargerID
-    global websocket
     try:
-        async with websockets.connect(url, ping_interval=None, timeout=None) as ws:
-            websocket = ws
+        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
             print("Connected.")
             pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
@@ -232,22 +244,8 @@ async def connect():
             print(resp_parsed[2]['chargerId'])
             temp = resp_parsed[2]['chargerId']
             chargerID = list(str(temp))
-            
-
-            x = [2, "ssb", "Authorize", {"idTag": "B4A63CDF"}]
-            y = json.dumps(x)
-            await websocket.send(y)
-            try:
-                x = [2, "ssb", "Heartbeat", {}]
-                y = json.dumps(x)
-                print("Sending heartbeat.")
-                await websocket.send(y)
-                time.sleep(3)
-                await websocket.recv()
-            except websockets.ConnectionClosed:
-                print("Disconnected.")
     except:
-        state.set_state(States.S_AVAILABLE)
+        state.set_state(States.S_NOTAVAILABLE)
 
 def RFID():
     while True:
@@ -257,8 +255,39 @@ def RFID():
         print("Tag text:", text)
         GPIO.cleanup()
 
-if __name__ == '__main__':
-    statemachine()
+async def main():
+    global loop, state, chargerID
+    try:
+        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+            state.set_state(States.S_AVAILABLE)
+            print("Connected.")
+            pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
+            "chargePointVendor": "AVT-Company",
+            "chargePointModel": "AVT-Express",
+            "chargePointSerialNumber": "avt.001.13.1",
+            "chargeBoxSerialNumber": "avt.001.13.1.01",
+            "firmwareVersion": "0.9.87",
+            "iccid": "",
+            "imsi": "",
+            "meterType": "AVT NQC-ACDC",
+            "meterSerialNumber": "avt.001.13.1.01" }]
+            pkg_send = json.dumps(pkg)
+            await websocket.send(pkg_send)
+            resp = await websocket.recv()
+            resp_parsed = json.loads(resp)
+            print(resp_parsed[2]['chargerId'])
+            temp = resp_parsed[2]['chargerId']
+            chargerID = list(str(temp))
+            tasks = [
+                loop.create_task(statemachine(websocket)),
+                #loop.create_task(send_heartbeat(websocket)),
+            ]
+            loop.run_until_complete(asyncio.wait(tasks))
+    except:
+        state.set_state(States.S_NOTAVAILABLE)
+nest_asyncio.apply()
+loop.run_until_complete(main())       
+    #statemachine()
     #gui = Process(target=GUI)
     #gui.start()
 
