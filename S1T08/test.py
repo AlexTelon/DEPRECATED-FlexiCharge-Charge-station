@@ -87,9 +87,10 @@ async def testfunc():
           
 async def statemachine():
     i = 1
-    url = "ws://localhost:9000/knaskalas"
+    url = "ws://54.220.194.65:1337/ssb"
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
         print("Connected.")
+        
         while True:
 
             if state.get_state() == States.S_STARTUP:
@@ -97,7 +98,7 @@ async def statemachine():
                 
                 # Only for temporary testing purposes: #
                 #await connect()
-                await testfunc()
+                #await testfunc()
                 
                 state.set_state(States.S_AVAILABLE)
                 ### Pseudo-code: ###
@@ -140,14 +141,14 @@ state = StateHandler()
 
 #statemachine()
 
-loop = asyncio.get_event_loop()
+#loop = asyncio.get_event_loop()
 #sched = AsyncIOScheduler()
 #sched.add_job(send_heartbeat, 'interval', seconds=1)
 #sched.start()
-tasks = [
-    loop.create_task(statemachine()),
-    loop.create_task(send_heartbeat()),
-]
+# tasks = [
+    # loop.create_task(statemachine()),
+    # loop.create_task(send_heartbeat()),
+# ]
 
-loop.run_until_complete(asyncio.wait(tasks))
-#asyncio.get_event_loop().run_until_complete(statemachine())
+#loop.run_until_complete(asyncio.wait(tasks))
+asyncio.get_event_loop().run_until_complete(statemachine())
