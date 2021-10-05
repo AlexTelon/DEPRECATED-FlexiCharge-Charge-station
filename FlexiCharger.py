@@ -133,6 +133,8 @@ def statemachine(isTagRead,rfidCardId):
                 #state.set_state(States.S_BUSY)
             if isTagRead.value == True:
                 state.set_state(States.S_AUTHORIZING)
+           
+            
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -200,6 +202,44 @@ def RFIDtest(isTagRead,rfidCardId):
         time.sleep(10)
         isTagRead.value = True
         rfidCardId.value = b"DETHARAREN20LANGTORD"
+
+
+
+def chargingsTatus():
+    #window = GUI()
+    x=0
+    while x < 10:
+        x = x+1
+        layout =    [
+                        [
+                            sg.Text(x, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0))
+                        ]
+                    ]
+
+        top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(25,710),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+        top_window.TKroot["cursor"] = "none"
+        time.sleep(1)
+
+
+def countdown(num_of_secs):
+    while num_of_secs:
+        m, s = divmod(num_of_secs, 60)
+        min_sec_format = '{:02d}:{:02d}'.format(m, s)
+        print(min_sec_format, end='/r')
+        print(m, "-----", s)
+        time.sleep(1)
+        num_of_secs -= 1
+        layout =    [
+                        [
+                            sg.Text(m, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0)),
+                            sg.Text(":" , font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(20,0)),
+                            sg.Text(s, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0))
+                        ]
+                    ]
+
+        top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(25,510),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+        top_window.TKroot["cursor"] = "none"
+        time.sleep(1)
             
 
 
