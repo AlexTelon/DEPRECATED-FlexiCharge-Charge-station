@@ -1,6 +1,6 @@
 import asyncio
-from asyncio.events import get_event_loop
-from asyncio.windows_events import NULL
+import ctypes
+from multiprocessing.sharedctypes import Value
 import os
 import websockets
 import json
@@ -20,7 +20,6 @@ if platform.system() != 'Windows':
     from mfrc522 import SimpleMFRC522
 
 from PIL import Image, ImageTk
-from multiprocessing import Process
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, Location, RegistrationStatus
@@ -39,7 +38,6 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 
-
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
@@ -55,28 +53,15 @@ img_plugInCable = get_img_data('Pictures/PlugInCable.png')
 img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
-img_Busy = get_img_data('Pictures/Busy.png')
+img_busy = get_img_data('Pictures/Busy.png')
 
-chargerID = ['0','0','0','0','0','0']
-url = "ws://54.220.194.65:1337/ssb"
+chargerID = ['1','3','3','7','6','9']
 
-#please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
-def generateQR():
-    qr = qrcode.QRCode(
-        version=8,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=5,
-        border=4,
-    )
-    qr.add_data(chargerID)
-    qr.make(fit=True)
-    img_qrCodeGenerated = qr.make_image(fill_color="black", back_color="white")
-    #img_qrCodeGenerated = qrcode.make(chargerID)
-    type(img_qrCodeGenerated)
-    img_qrCodeGenerated.save("Pictures/QrCode.png")
+img_qrCodeGenerated = qrcode.make(chargerID)
+type(img_qrCodeGenerated)
+img_qrCodeGenerated.save("Pictures/QrCode.png")
 
 def GUI():
-    global chargerID
     sg.theme('Black')
     
     background_image =  [
@@ -101,15 +86,15 @@ def GUI():
 
     qrCodeLayout =  [
                         [   
-                            sg.Image(data=img_qrCode, key='QRCODE', size=(285,285)) 
+                            sg.Image(data=img_qrCode, key='QRCODE', size=(280,280)) 
                         ]
                     ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     top_window.TKroot["cursor"] = "none"
     top_window.hide()
 
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
+    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), keep_on_top=True, grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(115, 182) bildstorlek 250x250 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
     
@@ -120,12 +105,14 @@ def refreshWindows(window_back, window_top, window_qr):
     window_top.refresh()
     window_qr.refresh()
 
-def statemachine():
+def statemachine(isTagRead,rfidCardId):
     window_back, window_top, window_qr = GUI()
     global state
     global lastState
      
     while True:
+        #print(state.get_state())
+
         if state.get_state() == States.S_STARTUP:
            asyncio.get_event_loop().run_until_complete(connect())
        
@@ -138,30 +125,22 @@ def statemachine():
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_top['ID0'].update(chargerID[0])
-                window_top['ID1'].update(chargerID[1])
-                window_top['ID2'].update(chargerID[2])
-                window_top['ID3'].update(chargerID[3])
-                window_top['ID4'].update(chargerID[4])
-                window_top['ID5'].update(chargerID[5])
-                generateQR()
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_top.UnHide()
                 window_qr.UnHide()
                 refreshWindows(window_back,window_top, window_qr)
-                time.sleep(5)
-            asyncio.get_event_loop().run_until_complete(reserveNow())
+                #time.sleep(5)
+                #state.set_state(States.S_BUSY)
+            if isTagRead.value == True:
+                state.set_state(States.S_AUTHORIZING)
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_Busy)
+                window_back['IMAGE'].update(data=img_busy)
                 window_top.hide()
                 window_qr.hide()
                 refreshWindows(window_back,window_top, window_qr)
-
-                time.sleep(7)
-                state.set_state(States.S_AVAILABLE)
 
         #elif state.get_state() == States.S_CONNECTING:
        
@@ -169,7 +148,14 @@ def statemachine():
        
         #elif state.get_state() == States.S_DISPLAYID:
        
-        #elif state.get_state() == States.S_AUTHORIZING:
+        elif state.get_state() == States.S_AUTHORIZING:
+             if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_authorizing)
+                print(rfidCardId.value)
+                window_top.hide()
+                window_qr.hide()
+                refreshWindows(window_back,window_top, window_qr)
        
         #elif state.get_state() == States.S_PLUGINCABLE:
        
@@ -177,62 +163,13 @@ def statemachine():
             window_back['IMAGE'].update(data=img_notAvailable)
             window_back.refresh()
 
-async def reserveNow():
-    global state
-    async with websockets.connect(url) as websocket:
-        try:
-            #Remove for using the app
-            tempj = [0]
-            tempj_send = json.dumps(tempj)
-            await websocket.send(tempj_send)
-            #end of remove
-
-            res = await websocket.recv()
-            res_pared = json.loads(res)
-            print(res_pared)
-
-            pkg_accepted = [3,
-                res_pared[1],
-                "ReserveNow",
-                { 
-                "status": "Accepted"
-                                } ]
-            pkg_accepted_send = json.dumps(pkg_accepted)
-            await websocket.send(pkg_accepted_send)
-            state.set_state(States.S_BUSY)
-        except:
-            pkg_rejected = [1, "Rejected"]
-            pkg_rejected_send = json.dumps(pkg_rejected)
-            await websocket.send(pkg_rejected_send)
-            state.set_state(States.S_AVAILABLE)
-
 async def connect():
-    global url
+    url = "ws://54.220.194.65:1337/ssb"
     global state
-    global chargerID
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
-            print("Connected.")
-            pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
-            "chargePointVendor": "AVT-Company",
-            "chargePointModel": "AVT-Express",
-            "chargePointSerialNumber": "avt.001.13.1",
-            "chargeBoxSerialNumber": "avt.001.13.1.01",
-            "firmwareVersion": "0.9.87",
-            "iccid": "",
-            "imsi": "",
-            "meterType": "AVT NQC-ACDC",
-            "meterSerialNumber": "avt.001.13.1.01" } ]
-            pkg_send = json.dumps(pkg)
-            await websocket.send(pkg_send)
-            resp = await websocket.recv()
-            resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerId'])
-            temp = resp_parsed[2]['chargerId']
-            chargerID = list(str(temp))
-            
-
+            #print("Connected.")
             x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
             y = json.dumps(x)
             await websocket.send(y)
@@ -248,16 +185,37 @@ async def connect():
     except:
         state.set_state(States.S_AVAILABLE)
 
-def RFID():
+
+def RFID(isTagRead,rfidCardId):
     while True:
         reader = SimpleMFRC522()
-        id, text = reader.read()
-        print("Tag ID:", id)
+        rfidCardId.value, text = reader.read()
+        isTagRead.value = True
+        print("Tag ID:", rfidCardId)
         print("Tag text:", text)
         GPIO.cleanup()
 
+def RFIDtest(isTagRead,rfidCardId):
+    while True:
+        time.sleep(10)
+        isTagRead.value = True
+        rfidCardId.value = b"DETHARAREN20LANGTORD"
+            
+
+
 if __name__ == '__main__':
-    statemachine()
+    isTagRead = multiprocessing.Value('i', False)
+    rfidCardId = multiprocessing.Array('c', 20)
+
+    rfid = multiprocessing.Process(target=RFIDtest, args=(isTagRead, rfidCardId))
+    state = multiprocessing.Process(target=statemachine, args=(isTagRead, rfidCardId))
+
+    state.start()
+    rfid.start()
+
+    state.join()
+    rfid.join()
+    #statemachine()
     #gui = Process(target=GUI)
     #gui.start()
 
@@ -274,4 +232,4 @@ if __name__ == '__main__':
     #if platform.system() != 'Windows':
     #    rfid.join()
     
-    ############################
+    
