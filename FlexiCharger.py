@@ -1,3 +1,4 @@
+#import Images
 import asyncio
 from asyncio.events import get_event_loop
 from asyncio.windows_events import NULL
@@ -27,7 +28,6 @@ from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, Location, RegistrationStatus
 from ocpp.v16 import call_result, call
 
-
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
     img.thumbnail(maxsize)
@@ -38,7 +38,9 @@ def get_img_data(f, maxsize=(480, 800)):
 
 state = StateHandler()
 lastState = StateHandler()
+loop = asyncio.get_event_loop()
 sg.Window._move_all_windows = True
+websocket = NULL
 
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
@@ -207,8 +209,10 @@ async def connect():
     global url
     global state
     global chargerID
+    global websocket
     try:
-        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+        async with websockets.connect(url, ping_interval=None, timeout=None) as ws:
+            websocket = ws
             state.set_state(States.S_AVAILABLE)
             print("Connected.")
             pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
@@ -230,13 +234,13 @@ async def connect():
             chargerID = list(str(temp))
             
 
-            x = [2, "CP_Carl", "Authorize", {"idTag": "B4A63CDF"}]
+            x = [2, "ssb", "Authorize", {"idTag": "B4A63CDF"}]
             y = json.dumps(x)
             await websocket.send(y)
             try:
-                x = [2, "CP_Carl", "Heartbeat", {}]
+                x = [2, "ssb", "Heartbeat", {}]
                 y = json.dumps(x)
-                #print("Sending heartbeat.")
+                print("Sending heartbeat.")
                 await websocket.send(y)
                 time.sleep(3)
                 await websocket.recv()
