@@ -17,7 +17,7 @@ from ocpp.v16 import call_result, call
 
 from StateHandler import States
 from StateHandler import StateHandler
-from DateHandler import DateHandler
+from UnixConverter import UnixConverter as uc
 
 loop = asyncio.get_event_loop()
 
@@ -32,7 +32,7 @@ async def send_heartbeat(ws):
 
 
 async def connect():
-    url = "ws://54.220.194.65:1337/123abc"
+    url = "ws://54.220.194.65:1337/ssb"
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
         print("Connected.")
 
@@ -48,13 +48,41 @@ async def connect():
             "meterSerialNumber": "avt.001.13.1.01" } ]
         pkg_send = json.dumps(pkg)
         await websocket.send(pkg_send)
+        
         resp = await websocket.recv()
         resp_parsed = json.loads(resp)
-        chargerID = resp_parsed[2]['chargerID']
-        l = list(str(chargerID))
-        print(l)
-        #print(chargerID)
+        chargerID = resp_parsed[2]['chargerId']
+        
+        #l = list(str(chargerID))
+        #print(l)
+        print(resp_parsed)
+        
+        tempj = [0]
+        tempj_send = json.dumps(tempj)
+        await websocket.send(tempj_send)
 
+        res = await websocket.recv()
+        res_parsed = json.loads(res)
+        print(res_parsed)
+        #print(res_parsed[3]['expiryDate'] / 1000)
+        expiryDate = res_parsed[3]['expiryDate'] / 1000
+        
+        expire = uc.convertUnixToLocal(expiryDate)
+        print(expire.strftime('%Y-%m-%d %H:%M:%S'))
+        
+
+        pkg_accepted = [3,
+            res_parsed[1],
+            "ReserveNow",
+            { 
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+        return 0
+        
+        
         x = [2, "knaskalas", "Authorize", {"idTag": "B4A63CDF"}]
         y = json.dumps(x)
         await websocket.send(y)
@@ -157,4 +185,4 @@ async def main():
 nest_asyncio.apply()
 
 state = StateHandler()
-loop.run_until_complete(main())
+loop.run_until_complete(connect())
