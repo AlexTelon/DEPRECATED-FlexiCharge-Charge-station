@@ -154,6 +154,7 @@ async def statemachine(websocket):
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
+        
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
