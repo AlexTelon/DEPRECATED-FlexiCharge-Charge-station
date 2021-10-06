@@ -89,12 +89,12 @@ def GUI():
     
     IdLayout =  [
                     [  
-                        sg.Text(chargerID[0], font=('ITC Avant Garde Std', 36), key='ID0', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[1], font=('ITC Avant Garde Std', 36), key='ID1', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[2], font=('ITC Avant Garde Std', 36), key='ID2', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[3], font=('ITC Avant Garde Std', 36), key='ID3', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[4], font=('ITC Avant Garde Std', 36), key='ID4', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[5], font=('ITC Avant Garde Std', 36), key='ID5', justification='center', pad=(25,0), text_color='white')
+                        sg.Text(chargerID[0], font=('ITC Avant Garde Std Md', 33), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('ITC Avant Garde Std Md', 33), key='ID1', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('ITC Avant Garde Std Md', 33), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('ITC Avant Garde Std Md', 33), key='ID3', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('ITC Avant Garde Std Md', 33), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('ITC Avant Garde Std Md', 33), key='ID5', justification='center', pad=(20,0), text_color='white')
                     ]
                 ]
 
@@ -106,20 +106,20 @@ def GUI():
     
     chargingPowerLayout =   [
                                 [  
-                                    sg.Text("61 kW at 7.3kWh", font=('ITC Avant Garde Std', 24), key='POWER', justification='center', text_color='white')
+                                    sg.Text("61 kW at 7.3kWh", font=('ITC Avant Garde Std Md', 20), key='POWER', justification='center', text_color='white')
                                 ]
                             ]
     
     chargingTimeLayout =   [
                                 [  
-                                    sg.Text("4 minutes until full", font=('ITC Avant Garde Std', 24), key='TIME', justification='center', text_color='white')
+                                    sg.Text("4 minutes until full", font=('ITC Avant Garde Std Md', 20), key='TIME', justification='center', text_color='white')
                                 ]
                             ]
 
     chargingPercentLayout = [
                                 [
-                                    sg.Text("0", font=('ITC Avant Garde Std', 160), key='PERCENT', justification='center', text_color='red'),
-                                    sg.Text("%", font=('ITC Avant Garde Std', 45), text_color='red')
+                                    sg.Text("0", font=('ITC Avant Garde Std Md', 160), key='PERCENT', justification='center', text_color='red'),
+                                    sg.Text("%", font=('ITC Avant Garde Std Md', 45), justification='left', pad=(0,20), text_color='red')
                                 ]
                             ]
 
@@ -128,7 +128,7 @@ def GUI():
         background_window.Maximize()
     background_window.TKroot["cursor"] = "none"
 
-    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(26,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     id_window.TKroot["cursor"] = "none"
     id_window.hide()
 
@@ -136,11 +136,11 @@ def GUI():
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(166, 648), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 640), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPower_window.TKroot["cursor"] = "none"
     chargingPower_window.hide()
 
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(166, 696), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 689), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
