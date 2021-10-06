@@ -88,12 +88,12 @@ def GUI():
     
     IdLayout =  [
                     [  
-                        sg.Text(chargerID[0], font=('ITC Avant Garde Std', 36.4), key='ID0', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[1], font=('ITC Avant Garde Std', 36.4), key='ID1', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[2], font=('ITC Avant Garde Std', 36.4), key='ID2', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[3], font=('ITC Avant Garde Std', 36.4), key='ID3', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[4], font=('ITC Avant Garde Std', 36.4), key='ID4', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[5], font=('ITC Avant Garde Std', 36.4), key='ID5', justification='center', pad=(25,0), text_color='white')
+                        sg.Text(chargerID[0], font=('ITC Avant Garde Std', 36), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('ITC Avant Garde Std', 36), key='ID1', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('ITC Avant Garde Std', 36), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('ITC Avant Garde Std', 36), key='ID3', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('ITC Avant Garde Std', 36), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('ITC Avant Garde Std', 36), key='ID5', justification='center', pad=(25,0), text_color='white')
                     ]
                 ]
 
