@@ -63,6 +63,7 @@ img_Busy = get_img_data('Pictures/Busy.png')
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
 
+
 #please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
     qr = qrcode.QRCode(
@@ -78,8 +79,34 @@ def generateQR():
     type(img_qrCodeGenerated)
     img_qrCodeGenerated.save("Pictures/QrCode.png")
 
+
+def chargingsTatus():
+    
+    x = 0
+    while x < 11:
+        print("adding")
+        
+        x = x+1
+        charginglayout =    [
+                        [
+                               sg.Text(x, font=('Tw Cen MT Condensed Extra Bold', 50), key='ID0', justification='center', pad=(20,0))
+                        ]
+                    ]
+        
+
+        charging_window = sg.Window(title="FlexiChargeTopWindow", layout=charginglayout, location=(220,300),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+        charging_window.TKroot["cursor"] = "none"
+        time.sleep(1)
+        charging_window.hide()
+        refreshWindows()
+        
+
+
+
+
 def GUI():
     global chargerID
+    global x
     sg.theme('Black')
     
     background_image =  [
@@ -107,6 +134,9 @@ def GUI():
                             sg.Image(data=img_qrCode, key='QRCODE', size=(285,285)) 
                         ]
                     ]
+    
+                 
+        
 
     top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     top_window.TKroot["cursor"] = "none"
@@ -115,19 +145,19 @@ def GUI():
     qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
-    
+
     return background_window, top_window, qr_window
 
 window_back, window_top, window_qr = GUI()
 
 def refreshWindows():
-    global window_back, window_top, window_qr
+    global window_back, window_top, window_qr, window_charging
     window_back.refresh()
     window_top.refresh()
     window_qr.refresh()
 
 async def statemachine(websocket):
-    global window_back, window_top, window_qr, state, lastState 
+    global window_back, window_top, window_qr, state, lastState
 
     while True:
         if state.get_state() == States.S_STARTUP:
@@ -159,9 +189,11 @@ async def statemachine(websocket):
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_Busy)
+                window_back['IMAGE'].update(data=img_charging)
+                
                 window_top.hide()
                 window_qr.hide()
+                chargingsTatus()
                 refreshWindows()
 
                 #time.sleep(7)
@@ -304,4 +336,19 @@ loop.run_until_complete(main())
     #if platform.system() != 'Windows':
     #    rfid.join()
     
-    
+"""
+    def chargingsTatus():
+    #window = GUI()
+    x=0
+    while x < 10:
+        x = x+1
+        layout =    [
+                        [
+                            sg.Text(x, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0))
+                        ]
+                    ]
+
+        top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(25,710),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+        top_window.TKroot["cursor"] = "none"
+        time.sleep(1)
+"""
