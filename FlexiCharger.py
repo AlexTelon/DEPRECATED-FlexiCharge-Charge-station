@@ -80,7 +80,7 @@ def generateQR():
     img_qrCodeGenerated.save("Pictures/QrCode.png")
 
 
-def chargingsTatus():
+async def chargingsTatus():
     
     x = 0
     while x < 11:
@@ -100,9 +100,27 @@ def chargingsTatus():
         charging_window.hide()
         refreshWindows()
         
+async def countdown(num_of_secs):
+    while num_of_secs:
+        m, s = divmod(num_of_secs, 60)
+        min_sec_format = '{:02d}:{:02d}'.format(m, s)
+        print(min_sec_format, end='/r')
+        print(m, "-----", s)
+        time.sleep(1)
+        num_of_secs -= 1
+        countlayout =    [
+                        [
+                            sg.Text(m, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0)),
+                            sg.Text(":" , font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(20,0)),
+                            sg.Text(s, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0))
+                        ]
+                    ]
 
-
-
+        count_window = sg.Window(title="FlexiChargeTopWindow", layout=countlayout, location=(25,510),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
+        count_window.TKroot["cursor"] = "none"
+        time.sleep(1)
+        count_window.hide()
+        refreshWindows()
 
 def GUI():
     global chargerID
@@ -193,7 +211,8 @@ async def statemachine(websocket):
                 
                 window_top.hide()
                 window_qr.hide()
-                chargingsTatus()
+                await chargingsTatus()
+                await countdown(120)
                 refreshWindows()
 
                 #time.sleep(7)
@@ -335,20 +354,3 @@ loop.run_until_complete(main())
 
     #if platform.system() != 'Windows':
     #    rfid.join()
-    
-"""
-    def chargingsTatus():
-    #window = GUI()
-    x=0
-    while x < 10:
-        x = x+1
-        layout =    [
-                        [
-                            sg.Text(x, font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0))
-                        ]
-                    ]
-
-        top_window = sg.Window(title="FlexiChargeTopWindow", layout=layout, location=(25,710),keep_on_top=True, grab_anywhere=False, transparent_color=sg.theme_background_color(), no_titlebar=True).finalize()
-        top_window.TKroot["cursor"] = "none"
-        time.sleep(1)
-"""
