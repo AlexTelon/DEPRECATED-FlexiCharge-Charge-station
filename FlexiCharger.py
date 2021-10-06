@@ -191,14 +191,6 @@ async def statemachine(websocket):
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
-<<<<<<< Updated upstream
-=======
-                
-                if res_pared[3] == "ReserveNow":
-                    await reserveNow(websocket,res)
-                time.sleep(random.randint(4,10))
-                state.set_state(States.S_BUSY)
->>>>>>> Stashed changes
                 
                 if res_pared[3] == "ReserveNow":
                     await reserveNow(websocket,res)
