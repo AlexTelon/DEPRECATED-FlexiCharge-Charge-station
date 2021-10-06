@@ -191,11 +191,11 @@ async def statemachine(websocket):
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
-                
-                if res_pared[3] == "ReserveNow":
+                print(res_pared)
+                if res_pared[2] == "ReserveNow":
                     await reserveNow(websocket,res)
-                time.sleep(random.randint(4,10))
-                state.set_state(States.S_BUSY)
+                #time.sleep(random.randint(4,10))
+                #state.set_state(States.S_BUSY)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
