@@ -13,6 +13,7 @@ import PySimpleGUI as sg
 import platform
 import qrcode
 import nest_asyncio
+import random
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -105,13 +106,20 @@ def GUI():
     
     chargingPowerLayout =   [
                                 [  
-                                    sg.Text(chargerID[0], font=('ITC Avant Garde Std', 24), key='ID0', justification='center', text_color='white')
+                                    sg.Text("61 kW at 7.3kWh", font=('ITC Avant Garde Std', 24), key='POWER', justification='center', text_color='white')
                                 ]
                             ]
     
     chargingTimeLayout =   [
                                 [  
-                                    sg.Text(chargerID[0], font=('ITC Avant Garde Std', 24), key='ID0', justification='center', text_color='white')
+                                    sg.Text("4 minutes until full", font=('ITC Avant Garde Std', 24), key='TIME', justification='center', text_color='white')
+                                ]
+                            ]
+
+    chargingPercentLayout = [
+                                [
+                                    sg.Text("0", font=('ITC Avant Garde Std', 160), key='PERCENT', justification='center', text_color='red'),
+                                    sg.Text("%", font=('ITC Avant Garde Std', 45), text_color='red')
                                 ]
                             ]
 
@@ -128,25 +136,30 @@ def GUI():
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(166, 648), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(166, 648), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPower_window.TKroot["cursor"] = "none"
     chargingPower_window.hide()
 
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(166, 696), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(166, 696), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
-    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window
+    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(80, 250), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercent_window.TKroot["cursor"] = "none"
+    chargingPercent_window.hide()
 
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime = GUI()
+    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window
+
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent = GUI()
 
 def refreshWindows():
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent
     window_back.refresh()
     window_id.refresh()
     window_qr.refresh()
     window_chargingPower.refresh()
     window_chargingTime.refresh()
+    window_chargingPercent.refresh()
 
 async def statemachine(websocket):
     global window_back, window_id, window_qr, state, lastState 
@@ -176,31 +189,25 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows()
                 
-                res = await websocket.recv()
-                res_pared = json.loads(res)
+                #res = await websocket.recv()
+                #res_pared = json.loads(res)
                 
-                if res_pared[3] == "ReserveNow":
-                    await reserveNow(websocket,res)
-
+                #if res_pared[3] == "ReserveNow":
+                    #await reserveNow(websocket,res)
+                time.sleep(random.randint(4,10))
+                state.set_state(States.S_BUSY)
+                
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_back['IMAGE'].update(data=img_Busy)
+                window_back['IMAGE'].update(data=img_followInstructions)
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows()
-
-        #elif state.get_state() == States.S_CONNECTING:
-            #if lastState.get_state() != state.get_state():
-
-        #elif state.get_state() == States.S_CONNECTED:
-            #if lastState.get_state() != state.get_state():
-
-        #elif state.get_state() == States.S_DISPLAYID:
-            #if lastState.get_state() != state.get_state():
-
-        #elif state.get_state() == States.S_AUTHORIZING:
-            #if lastState.get_state() != state.get_state():
+                
+                #this might need to change later but for now it is random
+                time.sleep(random.randint(4,10))
+                state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -209,29 +216,47 @@ async def statemachine(websocket):
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows()
+                time.sleep(random.randint(6,15))
+                state.set_state(States.S_CONNECTINGTOCAR)
         
         elif state.get_state() == States.S_CONNECTINGTOCAR:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
-                window_id.hide()
-                window_qr.hide()
+                refreshWindows()
+                time.sleep(random.randint(10,15))
+                state.set_state(States.S_CHARGING)
+
+        elif state.get_state() == States.S_CHARGING:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_charging)
+                window_chargingPower.un_hide()
+                window_chargingTime.un_hide()
+                window_chargingPercent.un_hide()
+                refreshWindows()
+                time.sleep(random.randint(5,15))
+                state.set_state(States.S_FULLYCHARGED)
+
+        elif state.get_state() == States.S_FULLYCHARGED:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_fullyCharged)
+                window_chargingPower['POWER'].update("64 kW used")
+                window_chargingTime.hide()
+                window_chargingPercent.hide()
                 refreshWindows()
 
         elif state.get_state() == States.S_CHARGINGCANCELLED:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_chargingCancelled)
-                window_id.hide()
-                window_qr.hide()
                 refreshWindows()
 
         elif state.get_state() == States.S_AUTHORIZING:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_authorizing)
-                window_id.hide()
-                window_qr.hide()
                 refreshWindows()
 
 async def authorize(idTag, websocket):
@@ -251,14 +276,8 @@ async def send_heartbeat(websocket):
 
 async def reserveNow(websocket, res):
     global state
+    #check if already booked? 
     try:
-        #Remove for using the app
-        #tempj = [0]
-        #tempj_send = json.dumps(tempj)
-        #await websocket.send(tempj_send)
-        #end of remove
-
-        #res = await websocket.recv()
         res_pared = json.loads(res)
         print(res_pared)
 
