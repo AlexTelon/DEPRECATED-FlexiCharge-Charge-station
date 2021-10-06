@@ -11,6 +11,8 @@ class States(Enum):
     S_CONNECTED = auto()
     S_BUSY = auto()
     S_CHARGINGCANCELLED = auto()
+    S_CHARGING = auto()
+    S_FULLYCHARGED = auto()
 
 class StateHandler:
     def __init__(self):
