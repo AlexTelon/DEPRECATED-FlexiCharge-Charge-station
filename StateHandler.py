@@ -7,9 +7,10 @@ class States(Enum):
     S_DISPLAYID = auto()
     S_PLUGINCABLE = auto()
     S_AUTHORIZING = auto()
-    S_CONNECTING = auto()
+    S_CONNECTINGTOCAR = auto()
     S_CONNECTED = auto()
     S_BUSY = auto()
+    S_CHARGINGCANCELLED = auto()
 
 class StateHandler:
     def __init__(self):
