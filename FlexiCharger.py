@@ -189,11 +189,11 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows()
                 
-                #res = await websocket.recv()
-                #res_pared = json.loads(res)
+                res = await websocket.recv()
+                res_pared = json.loads(res)
                 
-                #if res_pared[3] == "ReserveNow":
-                    #await reserveNow(websocket,res)
+                if res_pared[3] == "ReserveNow":
+                    await reserveNow(websocket,res)
                 time.sleep(random.randint(4,10))
                 state.set_state(States.S_BUSY)
                 
