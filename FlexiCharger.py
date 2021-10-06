@@ -63,7 +63,7 @@ img_Busy = get_img_data('Pictures/Busy.png')
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
 
-#please don't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
+#pLeaSe dOn't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
     qr = qrcode.QRCode(
         version=8,
@@ -82,23 +82,18 @@ def GUI():
     global chargerID
     sg.theme('Black')
     
-    background_image =  [
+    backgroundLayout =  [
                             [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))]
                         ]
-
-    background_window = sg.Window(title="FlexiCharge", layout=background_image, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
-    if platform.system() != 'Windows':
-        background_window.Maximize()
-    background_window.TKroot["cursor"] = "none"
     
-    IdLayout =    [
+    IdLayout =  [
                     [  
-                        sg.Text(chargerID[0], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID0', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[1], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID1', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[2], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID2', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[3], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID3', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[4], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID4', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[5], font=('Tw Cen MT Condensed Extra Bold', 30), key='ID5', justification='center', pad=(25,0), text_color='white')
+                        sg.Text(chargerID[0], font=('ITC Avant Garde Std', 36.4), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('ITC Avant Garde Std', 36.4), key='ID1', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('ITC Avant Garde Std', 36.4), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('ITC Avant Garde Std', 36.4), key='ID3', justification='center', pad=(25,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('ITC Avant Garde Std', 36.4), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('ITC Avant Garde Std', 36.4), key='ID5', justification='center', pad=(25,0), text_color='white')
                     ]
                 ]
 
@@ -107,31 +102,57 @@ def GUI():
                             sg.Image(data=img_qrCode, key='QRCODE', size=(285,285)) 
                         ]
                     ]
+    
+    chargingPowerLayout =   [
+                                [  
+                                    sg.Text(chargerID[0], font=('ITC Avant Garde Std', 24), key='ID0', justification='center', text_color='white')
+                                ]
+                            ]
+    
+    chargingTimeLayout =   [
+                                [  
+                                    sg.Text(chargerID[0], font=('ITC Avant Garde Std', 24), key='ID0', justification='center', text_color='white')
+                                ]
+                            ]
 
-    top_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    top_window.TKroot["cursor"] = "none"
-    top_window.hide()
+    background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
+    if platform.system() != 'Windows':
+        background_window.Maximize()
+    background_window.TKroot["cursor"] = "none"
+
+    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    id_window.TKroot["cursor"] = "none"
+    id_window.hide()
 
     qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
-    
-    return background_window, top_window, qr_window
 
-window_back, window_top, window_qr = GUI()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(166, 648), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    chargingPower_window.TKroot["cursor"] = "none"
+    chargingPower_window.hide()
+
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(166, 696), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    chargingTime_window.TKroot["cursor"] = "none"
+    chargingTime_window.hide()
+
+    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window
+
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime = GUI()
 
 def refreshWindows():
-    global window_back, window_top, window_qr
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime
     window_back.refresh()
-    window_top.refresh()
+    window_id.refresh()
     window_qr.refresh()
+    window_chargingPower.refresh()
+    window_chargingTime.refresh()
 
 async def statemachine(websocket):
-    global window_back, window_top, window_qr, state, lastState 
+    global window_back, window_id, window_qr, state, lastState 
 
     while True:
         if state.get_state() == States.S_STARTUP:
-            #asyncio.get_event_loop().run_until_complete(connect())
             pass
         elif state.get_state() == States.S_NOTAVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -142,52 +163,83 @@ async def statemachine(websocket):
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
-                window_top['ID0'].update(chargerID[0])
-                window_top['ID1'].update(chargerID[1])
-                window_top['ID2'].update(chargerID[2])
-                window_top['ID3'].update(chargerID[3])
-                window_top['ID4'].update(chargerID[4])
-                window_top['ID5'].update(chargerID[5])
+                window_id['ID0'].update(chargerID[0])
+                window_id['ID1'].update(chargerID[1])
+                window_id['ID2'].update(chargerID[2])
+                window_id['ID3'].update(chargerID[3])
+                window_id['ID4'].update(chargerID[4])
+                window_id['ID5'].update(chargerID[5])
                 generateQR()
                 window_back['IMAGE'].update(data=img_chargerID)
-                window_top.UnHide()
+                window_id.UnHide()
                 window_qr.UnHide()
                 refreshWindows()
-                time.sleep(5)
-                asyncio.get_event_loop().run_until_complete(reserveNow(websocket))
+                
+                res = await websocket.recv()
+                res_pared = json.loads(res)
+                
+                if res_pared[3] == "ReserveNow":
+                    await reserveNow(websocket,res)
 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_Busy)
-                window_top.hide()
+                window_id.hide()
                 window_qr.hide()
                 refreshWindows()
 
-                #time.sleep(7)
-                #state.set_state(States.S_AVAILABLE)
-
         #elif state.get_state() == States.S_CONNECTING:
-       
-        #elif state.get_state() == States.S_CONNECTED:
-       
-        #elif state.get_state() == States.S_DISPLAYID:
-       
-        #elif state.get_state() == States.S_AUTHORIZING:
-       
-        #elif state.get_state() == States.S_PLUGINCABLE:
-       
-        else:
-            window_back['IMAGE'].update(data=img_notAvailable)
-            window_back.refresh()
+            #if lastState.get_state() != state.get_state():
 
-async def authorize(idTag):
-    x = [2, "ssb", "Authorize", {"idTag": "B4A63CDF"}]
+        #elif state.get_state() == States.S_CONNECTED:
+            #if lastState.get_state() != state.get_state():
+
+        #elif state.get_state() == States.S_DISPLAYID:
+            #if lastState.get_state() != state.get_state():
+
+        #elif state.get_state() == States.S_AUTHORIZING:
+            #if lastState.get_state() != state.get_state():
+
+        elif state.get_state() == States.S_PLUGINCABLE:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_plugInCable)
+                window_id.hide()
+                window_qr.hide()
+                refreshWindows()
+        
+        elif state.get_state() == States.S_CONNECTINGTOCAR:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_connectingToCar)
+                window_id.hide()
+                window_qr.hide()
+                refreshWindows()
+
+        elif state.get_state() == States.S_CHARGINGCANCELLED:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_chargingCancelled)
+                window_id.hide()
+                window_qr.hide()
+                refreshWindows()
+
+        elif state.get_state() == States.S_AUTHORIZING:
+            if lastState.get_state() != state.get_state():
+                lastState.set_state(state.get_state())
+                window_back['IMAGE'].update(data=img_authorizing)
+                window_id.hide()
+                window_qr.hide()
+                refreshWindows()
+
+async def authorize(idTag, websocket):
+    x = [2, "ssb", "Authorize", {"idTag": idTag}]
     y = json.dumps(x)
     await websocket.send(y)
     response = await websocket.recv()
 
-async def send_heartbeat():
+async def send_heartbeat(websocket):
     while True:
         hb = [2, "ssb", "Heartbeat", {}]
         z = json.dumps(hb)
@@ -196,16 +248,16 @@ async def send_heartbeat():
         print(await websocket.recv())
         await asyncio.sleep(2)
 
-async def reserveNow(websocket):
+async def reserveNow(websocket, res):
     global state
     try:
         #Remove for using the app
-        tempj = [0]
-        tempj_send = json.dumps(tempj)
-        await websocket.send(tempj_send)
+        #tempj = [0]
+        #tempj_send = json.dumps(tempj)
+        #await websocket.send(tempj_send)
         #end of remove
 
-        res = await websocket.recv()
+        #res = await websocket.recv()
         res_pared = json.loads(res)
         print(res_pared)
 
@@ -285,23 +337,6 @@ async def main():
             loop.run_until_complete(asyncio.wait(tasks))
     except:
         state.set_state(States.S_NOTAVAILABLE)
+
 nest_asyncio.apply()
-loop.run_until_complete(main())       
-    #statemachine()
-    #gui = Process(target=GUI)
-    #gui.start()
-
-    #OCPP = Process(target=asyncio.get_event_loop().run_until_complete(connect()))
-    #OCPP.start()
-
-    #if platform.system() != 'Windows':
-    #    rfid = Process(target=RFID)
-    #    rfid.start()
-
-    #gui.join()
-    #OCPP.join()
-
-    #if platform.system() != 'Windows':
-    #    rfid.join()
-    
-    
+loop.run_until_complete(main())          
