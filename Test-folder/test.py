@@ -19,7 +19,9 @@ from StateHandler import States
 from StateHandler import StateHandler
 from UnixConverter import UnixConverter as uc
 
+
 loop = asyncio.get_event_loop()
+
 
 async def send_heartbeat(ws):
     while True:
@@ -33,32 +35,84 @@ async def send_heartbeat(ws):
 
 async def reserveNow(websocket):
         try:
-            tempj = [0]
-            tempj_send = json.dumps(tempj)
-            await websocket.send(tempj_send)
+            #tempj = [0]
+            #tempj_send = json.dumps(tempj)
+            #await websocket.send(tempj_send)
 
             res = await websocket.recv()
             res_parsed = json.loads(res)
             print(res_parsed)
-            
+
             pkg_accepted = [3,
                 res_parsed[1],
-                "ReserveNow",
-                { 
+                res_parsed[2],
+                {
                 "status": "Accepted"
                                    } ]
             pkg_accepted_send = json.dumps(pkg_accepted)
             await websocket.send(pkg_accepted_send)
-        
+
             return True, res_parsed[3]['expiryDate']
-            
+
         except:
             pkg_rejected = [1, "Rejected"]
             pkg_rejected_send = json.dumps(pkg_rejected)
             await websocket.send(pkg_rejected_send)
             return False, 0
-            
-        
+
+
+async def remoteStartTransaction(websocket):
+    try:
+        # Send fake request from server
+        #pkg = ["ssb", "RemoteStart"]
+        #pkg_send = json.dumps(pkg)
+        #await websocket.send(pkg_send)
+
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+    except:
+        pass
+
+async def remoteStopTransaction(websocket):
+    try:
+        # Send fake request from server
+        #pkg = ["ssb", "RemoteStop"]
+        #pkg_send = json.dumps(pkg)
+        #await websocket.send(pkg_send)
+
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+    except:
+        pass
+
+
+
 async def connect():
     url = "ws://54.220.194.65:1337/ssb"
     async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
@@ -76,28 +130,32 @@ async def connect():
             "meterSerialNumber": "avt.001.13.1.01" } ]
         pkg_send = json.dumps(pkg)
         await websocket.send(pkg_send)
-        
+
         resp = await websocket.recv()
         resp_parsed = json.loads(resp)
-        chargerID = resp_parsed[2]['chargerId']
-        
+        chargerID = resp_parsed[3]['chargerId']
+
         #l = list(str(chargerID))
         #print(l)
         print(resp_parsed)
-        
-        
+
+
+        #await remoteStopTransaction(websocket)
+
+
         boolean, expiryDate = await reserveNow(websocket)
-        
+
         if boolean:
             expiryDate = expiryDate / 1000 # Server sends in seconds, need milliseconds.
             expire = uc.convertUnixToLocal(expiryDate) # Convert time using UnixConverter.
             print(expire.strftime('%Y-%m-%d %H:%M:%S')) # Format time using strftime().
         else:
             print("sadge")
-            
+
+
         return 0
-        
-        
+
+
         x = [2, "knaskalas", "Authorize", {"idTag": "B4A63CDF"}]
         y = json.dumps(x)
         await websocket.send(y)
