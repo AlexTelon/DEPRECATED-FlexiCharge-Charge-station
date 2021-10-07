@@ -1,9 +1,6 @@
-#import Images
 import asyncio
 from asyncio.events import get_event_loop
 from asyncio.windows_events import NULL
-import os
-from asyncio.base_events import _run_until_complete_cb
 import websockets
 import json
 import time
@@ -14,6 +11,7 @@ import platform
 import qrcode
 import nest_asyncio
 import random
+from datetime import datetime
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -23,12 +21,7 @@ if platform.system() != 'Windows':
 
     from mfrc522 import SimpleMFRC522
 
-from PIL import Image, ImageTk
-from multiprocessing import Process
-from ocpp.routing import on
-from ocpp.v16 import ChargePoint as cp
-from ocpp.v16.enums import Action, Location, RegistrationStatus
-from ocpp.v16 import call_result, call
+from PIL import Image
 
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
@@ -42,13 +35,14 @@ state = StateHandler()
 lastState = StateHandler()
 loop = asyncio.get_event_loop()
 sg.Window._move_all_windows = True
+response = NULL
 
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
-img_authorizing = get_img_data('Pictures/Authorizing.png')
+img_authorizing = get_img_data('Pictures/authorizing.png')
 img_charging = get_img_data('Pictures/Charging.png')
 img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
 img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
@@ -62,7 +56,7 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
-url = "ws://54.220.194.65:1337/ssb"
+url = "ws://54.220.194.65:1337/abc125"
 
 #pLeaSe dOn't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
@@ -89,12 +83,12 @@ def GUI():
     
     IdLayout =  [
                     [  
-                        sg.Text(chargerID[0], font=('ITC Avant Garde Std', 36), key='ID0', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[1], font=('ITC Avant Garde Std', 36), key='ID1', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[2], font=('ITC Avant Garde Std', 36), key='ID2', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[3], font=('ITC Avant Garde Std', 36), key='ID3', justification='center', pad=(25,0), text_color='white'),
-                        sg.Text(chargerID[4], font=('ITC Avant Garde Std', 36), key='ID4', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[5], font=('ITC Avant Garde Std', 36), key='ID5', justification='center', pad=(25,0), text_color='white')
+                        sg.Text(chargerID[0], font=('ITC Avant Garde Std Md', 33), key='ID0', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[1], font=('ITC Avant Garde Std Md', 33), key='ID1', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[2], font=('ITC Avant Garde Std Md', 33), key='ID2', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[3], font=('ITC Avant Garde Std Md', 33), key='ID3', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[4], font=('ITC Avant Garde Std Md', 33), key='ID4', justification='center', pad=(20,0), text_color='white'),
+                        sg.Text(chargerID[5], font=('ITC Avant Garde Std Md', 33), key='ID5', justification='center', pad=(20,0), text_color='white')
                     ]
                 ]
 
@@ -106,29 +100,34 @@ def GUI():
     
     chargingPowerLayout =   [
                                 [  
-                                    sg.Text("61 kW at 7.3kWh", font=('ITC Avant Garde Std', 24), key='POWER', justification='center', text_color='white')
+                                    sg.Text("61 kW at 7.3kWh", font=('Lato', 20), key='POWER', justification='center', text_color='white')
                                 ]
                             ]
     
     chargingTimeLayout =   [
                                 [  
-                                    sg.Text("4 minutes until full", font=('ITC Avant Garde Std', 24), key='TIME', justification='center', text_color='white')
+                                    sg.Text("4 minutes until full", font=('Lato', 20), key='TIME', justification='center', text_color='white')
                                 ]
                             ]
 
     chargingPercentLayout = [
                                 [
-                                    sg.Text("0", font=('ITC Avant Garde Std', 160), key='PERCENT', justification='center', text_color='red'),
-                                    sg.Text("%", font=('ITC Avant Garde Std', 45), text_color='red')
+                                    sg.Text("0", font=('ITC Avant Garde Std Md', 160), key='PERCENT', text_color='red')
                                 ]
                             ]
-
+   
+    chargingPercentMarkLayout = [
+                                    [
+                                        sg.Text("%", font=('ITC Avant Garde Std Md', 55), key='PERCENTMARK', text_color='red')
+                                    ]
+                                ]
+   
     background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
     if platform.system() != 'Windows':
         background_window.Maximize()
     background_window.TKroot["cursor"] = "none"
 
-    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(27,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(26,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     id_window.TKroot["cursor"] = "none"
     id_window.hide()
 
@@ -136,21 +135,25 @@ def GUI():
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(166, 648), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 645), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPower_window.TKroot["cursor"] = "none"
     chargingPower_window.hide()
 
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(166, 696), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 694), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
-    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(80, 250), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 245), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercent_window.TKroot["cursor"] = "none"
     chargingPercent_window.hide()
 
-    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window
+    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 350), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercentMark_window.TKroot["cursor"] = "none"
+    chargingPercentMark_window.hide()
 
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent = GUI()
+    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window, chargingPercentMark_window
+
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI()
 
 def refreshWindows():
     global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent
@@ -160,10 +163,10 @@ def refreshWindows():
     window_chargingPower.refresh()
     window_chargingTime.refresh()
     window_chargingPercent.refresh()
+    window_chargingPercentMark.refresh()
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, state, lastState 
-
+    global window_back, window_id, window_qr, state, lastState
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -191,11 +194,11 @@ async def statemachine(websocket):
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
-                
-                if res_pared[3] == "ReserveNow":
+                #print(res_pared)
+                if res_pared[2] == "ReserveNow":
                     await reserveNow(websocket,res)
-                time.sleep(random.randint(4,10))
-                state.set_state(States.S_BUSY)
+                #time.sleep(random.randint(4,10))
+                #state.set_state(States.S_BUSY)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -206,8 +209,11 @@ async def statemachine(websocket):
                 refreshWindows()
                 
                 #this might need to change later but for now it is random
-                time.sleep(random.randint(4,10))
-                state.set_state(States.S_PLUGINCABLE)
+                #resp = await websocket.recv()
+                #resp_pared = json.loads(resp)
+                if await remoteStartTransaction(websocket):
+                    #await startTransaction(websocket)
+                    state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -228,14 +234,31 @@ async def statemachine(websocket):
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
+            percent = 0
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
                 window_chargingPower.un_hide()
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
-                refreshWindows()
-                time.sleep(random.randint(5,15))
+                window_chargingPercentMark.un_hide()
+                while True:
+                    if percent >= 10:
+                        window_chargingPercent.move(60, 245)
+                        window_chargingPercentMark.move(330, 350)                     
+                    if percent > 99:
+                        #await stopTransaction(websocket)
+                        break
+                    refreshWindows()
+                    percent += 1
+                    window_chargingPercent['PERCENT'].update(str(percent))
+                    if percent >= 20 and percent < 30:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
+                        window_chargingPercent['PERCENT'].update(text_color='yellow')
+                    elif percent >= 75:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
+                        window_chargingPercent['PERCENT'].update(text_color='#78BD76')
+                    time.sleep(0.20)
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
@@ -245,8 +268,12 @@ async def statemachine(websocket):
                 window_chargingPower['POWER'].update("64 kW used")
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
+                window_chargingPercentMark.hide()
                 refreshWindows()
-
+                time.sleep(4)
+                window_chargingPower.hide()
+                state.set_state(States.S_AVAILABLE)
+                
         elif state.get_state() == States.S_CHARGINGCANCELLED:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
@@ -291,33 +318,95 @@ async def reserveNow(websocket, res):
         await websocket.send(pkg_rejected_send)
         #state.set_state(States.S_AVAILABLE)
 
-async def connect():
-    global url
-    global state
-    global chargerID
+async def remoteStartTransaction(websocket):
     try:
-        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-            state.set_state(States.S_AVAILABLE)
-            print("Connected.")
-            pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
-            "chargePointVendor": "AVT-Company",
-            "chargePointModel": "AVT-Express",
-            "chargePointSerialNumber": "avt.001.13.1",
-            "chargeBoxSerialNumber": "avt.001.13.1.01",
-            "firmwareVersion": "0.9.87",
-            "iccid": "",
-            "imsi": "",
-            "meterType": "AVT NQC-ACDC",
-            "meterSerialNumber": "avt.001.13.1.01" } ]
-            pkg_send = json.dumps(pkg)
-            await websocket.send(pkg_send)
-            resp = await websocket.recv()
-            resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerId'])
-            temp = resp_parsed[2]['chargerId']
-            chargerID = list(str(temp))
+        # Send fake request from server
+        pkg = ["abc125", "RemoteStart"]
+        pkg_send = json.dumps(pkg)
+        await websocket.send(pkg_send)
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+        return True
     except:
-        state.set_state(States.S_NOTAVAILABLE)
+        return False
+
+async def remoteStopTransaction(websocket):
+    try:
+        # Send fake request from server
+        #pkg = ["ssb", "RemoteStop"]
+        #pkg_send = json.dumps(pkg)
+        #await websocket.send(pkg_send)
+
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+    except:
+        pass
+
+async def statusNotification(websocket):
+    pkg = [1, {'connectorID': 1,
+    'errorCode': 'NoError',
+    'info': 0,
+    'status': 'Available',
+    'timestamp': datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+    'vendorId': 0,
+    'vendorErrorCode': 0}]
+    pkg_send = json.dumps(pkg)
+    await websocket.send(pkg_send)
+
+    response = await websocket.recv()
+    response_parsed = json.loads(response)
+    print(response_parsed)
+
+async def startTransaction(websocket):
+    x = [2, "ssb", "StartTransaction", {
+            "connectorId": 2,
+            "idTag": "B4A63CDF",
+            "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+            "meterStart": 1,
+            "reservationId": 0
+        }]
+    y = json.dumps(x)
+    await websocket.send(y)
+    resp = await websocket.recv()
+    global response
+    response = json.loads(resp)
+    print(response)
+
+async def stopTransaction(websocket):
+    x = [2, response[1], "StopTransaction", {
+        "transactionId": response[3]['reservationID'],
+        "idTag": "B4A63CDF",
+        "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+        "meterStop": 1
+    }]
+    y = json.dumps(x)
+    await websocket.send(y)
+    print("Response: " + await websocket.recv())
 
 def RFID():
     while True:
@@ -347,8 +436,9 @@ async def main():
             await websocket.send(pkg_send)
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerId'])
-            temp = resp_parsed[2]['chargerId']
+            print(resp_parsed)
+            print(resp_parsed[3]['chargerId'])
+            temp = resp_parsed[3]['chargerId']
             chargerID = list(str(temp))
             tasks = [
                 loop.create_task(statemachine(websocket)),
