@@ -1,12 +1,9 @@
-#import Images
 import asyncio
 from asyncio.events import get_event_loop
-from asyncio.windows_events import NULL
 import os
-from asyncio.base_events import _run_until_complete_cb
 import websockets
 import json
-import time
+import time#
 import multiprocessing
 import io
 import PySimpleGUI as sg
@@ -24,7 +21,6 @@ if platform.system() != 'Windows':
     from mfrc522 import SimpleMFRC522
 
 from PIL import Image, ImageTk
-from multiprocessing import Process
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, Location, RegistrationStatus
@@ -118,11 +114,16 @@ def GUI():
 
     chargingPercentLayout = [
                                 [
-                                    sg.Text("0", font=('ITC Avant Garde Std Md', 160), key='PERCENT', justification='center', text_color='red'),
-                                    sg.Text("%", font=('ITC Avant Garde Std Md', 45), justification='left', pad=(0,20), text_color='red')
+                                    sg.Text("0", font=('ITC Avant Garde Std Md', 160), key='PERCENT', text_color='red')
                                 ]
                             ]
-
+   
+    chargingPercentMarkLayout = [
+                                    [
+                                        sg.Text("%", font=('ITC Avant Garde Std Md', 55), key='PERCENTMARK', text_color='red')
+                                    ]
+                                ]
+   
     background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
     if platform.system() != 'Windows':
         background_window.Maximize()
@@ -144,13 +145,17 @@ def GUI():
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
-    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(80, 250), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 190), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercent_window.TKroot["cursor"] = "none"
     chargingPercent_window.hide()
 
-    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window
+    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 330), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercentMark_window.TKroot["cursor"] = "none"
+    chargingPercentMark_window.hide()
 
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent = GUI()
+    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window, chargingPercentMark_window
+
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI()
 
 def refreshWindows():
     global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent
@@ -160,6 +165,7 @@ def refreshWindows():
     window_chargingPower.refresh()
     window_chargingTime.refresh()
     window_chargingPercent.refresh()
+    window_chargingPercentMark.refresh()
 
 async def statemachine(websocket):
     global window_back, window_id, window_qr, state, lastState 
@@ -189,13 +195,13 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows()
                 
-                res = await websocket.recv()
-                res_pared = json.loads(res)
-                print(res_pared)
-                if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res)
+                #res = await websocket.recv()
+                #res_pared = json.loads(res)
+                #print(res_pared)
+                #if res_pared[2] == "ReserveNow":
+                    #await reserveNow(websocket,res)
                 #time.sleep(random.randint(4,10))
-                #state.set_state(States.S_BUSY)
+                state.set_state(States.S_BUSY)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -206,7 +212,7 @@ async def statemachine(websocket):
                 refreshWindows()
                 
                 #this might need to change later but for now it is random
-                time.sleep(random.randint(4,10))
+                #time.sleep(random.randint(4,10))
                 state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -216,7 +222,7 @@ async def statemachine(websocket):
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows()
-                time.sleep(random.randint(6,15))
+                #time.sleep(random.randint(6,15))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
         elif state.get_state() == States.S_CONNECTINGTOCAR:
@@ -224,7 +230,7 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
                 refreshWindows()
-                time.sleep(random.randint(10,15))
+                #time.sleep(random.randint(10,15))
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
@@ -234,9 +240,11 @@ async def statemachine(websocket):
                 window_chargingPower.un_hide()
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
+                window_chargingPercentMark.un_hide()
+                window_chargingPercent.Location = (0,0)
                 refreshWindows()
                 time.sleep(random.randint(5,15))
-                state.set_state(States.S_FULLYCHARGED)
+                #state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
             if lastState.get_state() != state.get_state():
@@ -245,6 +253,7 @@ async def statemachine(websocket):
                 window_chargingPower['POWER'].update("64 kW used")
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
+                window_chargingPercentMark.hide()
                 refreshWindows()
 
         elif state.get_state() == States.S_CHARGINGCANCELLED:
@@ -347,8 +356,9 @@ async def main():
             await websocket.send(pkg_send)
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerId'])
-            temp = resp_parsed[2]['chargerId']
+            print(resp_parsed)
+            print(resp_parsed[3]['chargerId'])
+            temp = resp_parsed[3]['chargerId']
             chargerID = list(str(temp))
             tasks = [
                 loop.create_task(statemachine(websocket)),
