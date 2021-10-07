@@ -195,13 +195,13 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows()
                 
-                #res = await websocket.recv()
-                #res_pared = json.loads(res)
+                res = await websocket.recv()
+                res_pared = json.loads(res)
                 #print(res_pared)
-                #if res_pared[2] == "ReserveNow":
-                    #await reserveNow(websocket,res)
+                if res_pared[2] == "ReserveNow":
+                    await reserveNow(websocket,res)
                 #time.sleep(random.randint(4,10))
-                state.set_state(States.S_BUSY)
+                #state.set_state(States.S_BUSY)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -212,7 +212,7 @@ async def statemachine(websocket):
                 refreshWindows()
                 
                 #this might need to change later but for now it is random
-                #time.sleep(random.randint(4,10))
+                time.sleep(random.randint(4,10))
                 state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -222,7 +222,7 @@ async def statemachine(websocket):
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows()
-                #time.sleep(random.randint(6,15))
+                time.sleep(random.randint(6,15))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
         elif state.get_state() == States.S_CONNECTINGTOCAR:
@@ -230,7 +230,7 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
                 refreshWindows()
-                #time.sleep(random.randint(10,15))
+                time.sleep(random.randint(10,15))
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
@@ -269,6 +269,9 @@ async def statemachine(websocket):
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
                 refreshWindows()
+                time.sleep(4)
+                window_chargingPower.hide()
+                state.set_state(States.S_AVAILABLE)
 
         elif state.get_state() == States.S_CHARGINGCANCELLED:
             if lastState.get_state() != state.get_state():
