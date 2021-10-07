@@ -1,9 +1,8 @@
 import asyncio
 from asyncio.events import get_event_loop
-import os
 import websockets
 import json
-import time#
+import time
 import multiprocessing
 import io
 import PySimpleGUI as sg
@@ -11,6 +10,7 @@ import platform
 import qrcode
 import nest_asyncio
 import random
+import datetime
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -20,11 +20,7 @@ if platform.system() != 'Windows':
 
     from mfrc522 import SimpleMFRC522
 
-from PIL import Image, ImageTk
-from ocpp.routing import on
-from ocpp.v16 import ChargePoint as cp
-from ocpp.v16.enums import Action, Location, RegistrationStatus
-from ocpp.v16 import call_result, call
+from PIL import Image
 
 def get_img_data(f, maxsize=(480, 800)):
     img = Image.open(f)
@@ -58,7 +54,7 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
-url = "ws://54.220.194.65:1337/ssb"
+url = "ws://54.220.194.65:1337/abc125"
 
 #pLeaSe dOn't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR():
@@ -212,8 +208,10 @@ async def statemachine(websocket):
                 refreshWindows()
                 
                 #this might need to change later but for now it is random
-                time.sleep(random.randint(4,10))
-                state.set_state(States.S_PLUGINCABLE)
+                #resp = await websocket.recv()
+                #resp_pared = json.loads(resp)
+                if await remoteStartTransaction(websocket):
+                    state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -317,33 +315,70 @@ async def reserveNow(websocket, res):
         await websocket.send(pkg_rejected_send)
         #state.set_state(States.S_AVAILABLE)
 
-async def connect():
-    global url
-    global state
-    global chargerID
+async def remoteStartTransaction(websocket):
     try:
-        async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-            state.set_state(States.S_AVAILABLE)
-            print("Connected.")
-            pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
-            "chargePointVendor": "AVT-Company",
-            "chargePointModel": "AVT-Express",
-            "chargePointSerialNumber": "avt.001.13.1",
-            "chargeBoxSerialNumber": "avt.001.13.1.01",
-            "firmwareVersion": "0.9.87",
-            "iccid": "",
-            "imsi": "",
-            "meterType": "AVT NQC-ACDC",
-            "meterSerialNumber": "avt.001.13.1.01" } ]
-            pkg_send = json.dumps(pkg)
-            await websocket.send(pkg_send)
-            resp = await websocket.recv()
-            resp_parsed = json.loads(resp)
-            print(resp_parsed[2]['chargerId'])
-            temp = resp_parsed[2]['chargerId']
-            chargerID = list(str(temp))
+        # Send fake request from server
+        pkg = ["abc125", "RemoteStart"]
+        pkg_send = json.dumps(pkg)
+        await websocket.send(pkg_send)
+
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+        return True
     except:
-        state.set_state(States.S_NOTAVAILABLE)
+        return False
+
+async def remoteStopTransaction(websocket):
+    try:
+        # Send fake request from server
+        #pkg = ["ssb", "RemoteStop"]
+        #pkg_send = json.dumps(pkg)
+        #await websocket.send(pkg_send)
+
+        # Retrieve request
+        response = await websocket.recv()
+        response_parsed = json.loads(response)
+        print(response_parsed)
+
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+    except:
+        pass
+
+async def statusNotification(websocket):
+    pkg = [1, {'connectorID': 1,
+    'errorCode': 'NoError',
+    'info': 0,
+    'status': 'Available',
+    'timestamp': datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+    'vendorId': 0,
+    'vendorErrorCode': 0}]
+    pkg_send = json.dumps(pkg)
+    await websocket.send(pkg_send)
+
+    response = await websocket.recv()
+    response_parsed = json.loads(response)
+    print(response_parsed)
 
 def RFID():
     while True:
