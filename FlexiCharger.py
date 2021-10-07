@@ -1,5 +1,6 @@
 import asyncio
 from asyncio.events import get_event_loop
+from asyncio.windows_events import NULL
 import websockets
 import json
 import time
@@ -10,7 +11,7 @@ import platform
 import qrcode
 import nest_asyncio
 import random
-import datetime
+from datetime import datetime
 
 from StateHandler import States
 from StateHandler import StateHandler
@@ -34,6 +35,7 @@ state = StateHandler()
 lastState = StateHandler()
 loop = asyncio.get_event_loop()
 sg.Window._move_all_windows = True
+response = NULL
 
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
@@ -164,8 +166,7 @@ def refreshWindows():
     window_chargingPercentMark.refresh()
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, state, lastState 
-
+    global window_back, window_id, window_qr, state, lastState
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -211,6 +212,7 @@ async def statemachine(websocket):
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
+                    #await startTransaction(websocket)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -245,6 +247,7 @@ async def statemachine(websocket):
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
                     if percent > 99:
+                        #await stopTransaction(websocket)
                         break
                     refreshWindows()
                     percent += 1
@@ -270,7 +273,7 @@ async def statemachine(websocket):
                 time.sleep(4)
                 window_chargingPower.hide()
                 state.set_state(States.S_AVAILABLE)
-
+                
         elif state.get_state() == States.S_CHARGINGCANCELLED:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
@@ -321,7 +324,6 @@ async def remoteStartTransaction(websocket):
         pkg = ["abc125", "RemoteStart"]
         pkg_send = json.dumps(pkg)
         await websocket.send(pkg_send)
-
         # Retrieve request
         response = await websocket.recv()
         response_parsed = json.loads(response)
@@ -379,6 +381,32 @@ async def statusNotification(websocket):
     response = await websocket.recv()
     response_parsed = json.loads(response)
     print(response_parsed)
+
+async def startTransaction(websocket):
+    x = [2, "ssb", "StartTransaction", {
+            "connectorId": 2,
+            "idTag": "B4A63CDF",
+            "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+            "meterStart": 1,
+            "reservationId": 0
+        }]
+    y = json.dumps(x)
+    await websocket.send(y)
+    resp = await websocket.recv()
+    global response
+    response = json.loads(resp)
+    print(response)
+
+async def stopTransaction(websocket):
+    x = [2, response[1], "StopTransaction", {
+        "transactionId": response[3]['reservationID'],
+        "idTag": "B4A63CDF",
+        "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+        "meterStop": 1
+    }]
+    y = json.dumps(x)
+    await websocket.send(y)
+    print("Response: " + await websocket.recv())
 
 def RFID():
     while True:
