@@ -112,6 +112,21 @@ async def remoteStopTransaction(websocket):
         pass
 
 
+async def statusNotification(websocket):
+    pkg = [1, {'connectorID': 1,
+    'errorCode': 'NoError',
+    'info': 0,
+    'status': 'Available',
+    'timestamp': datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
+    'vendorId': 0,
+    'vendorErrorCode': 0}]
+    pkg_send = json.dumps(pkg)
+    await websocket.send(pkg_send)
+
+    response = await websocket.recv()
+    response_parsed = json.loads(response)
+    print(response_parsed)
+
 
 async def connect():
     url = "ws://54.220.194.65:1337/ssb"
@@ -139,9 +154,9 @@ async def connect():
         #print(l)
         print(resp_parsed)
 
-
+        await statusNotification(websocket)
         #await remoteStopTransaction(websocket)
-
+        return 0
 
         boolean, expiryDate = await reserveNow(websocket)
 
