@@ -145,11 +145,11 @@ def GUI():
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
-    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 190), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 245), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercent_window.TKroot["cursor"] = "none"
     chargingPercent_window.hide()
 
-    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 330), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 350), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercentMark_window.TKroot["cursor"] = "none"
     chargingPercentMark_window.hide()
 
@@ -234,6 +234,7 @@ async def statemachine(websocket):
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
+            percent = 0
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
@@ -241,8 +242,19 @@ async def statemachine(websocket):
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
                 window_chargingPercentMark.un_hide()
-                window_chargingPercent.Location = (0,0)
-                refreshWindows()
+                while True:
+                    if percent == 10:
+                        window_chargingPercent.move(110, 245)
+                        window_chargingPercentMark.move(306, 350)
+                    elif percent == 99:
+                        break
+                    refreshWindows()
+                    percent += 1
+                    window_chargingPercent['PERCENT'].update(str(percent))
+                    if percent == 20:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
+                        window_chargingPercent['PERCENT'].update(text_color='yellow')
+                    time.sleep(1)
                 time.sleep(random.randint(5,15))
                 #state.set_state(States.S_FULLYCHARGED)
 
