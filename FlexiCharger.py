@@ -44,7 +44,7 @@ img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
 img_notAvailable = get_img_data('Pictures/NotAvailable.png')
 img_errorWhileCharging = get_img_data('Pictures/AnErrorOccuredWhileCharging.png')
-img_authorizing = get_img_data('Pictures/Authorizing.png')
+img_authorizing = get_img_data('Pictures/authorizing.png')
 img_charging = get_img_data('Pictures/Charging.png')
 img_chargingCancelled = get_img_data('Pictures/ChargingCancelled.png')
 img_connectingToCar = get_img_data('Pictures/ConnectingToCar.png')
@@ -102,13 +102,13 @@ def GUI():
     
     chargingPowerLayout =   [
                                 [  
-                                    sg.Text("61 kW at 7.3kWh", font=('ITC Avant Garde Std Md', 20), key='POWER', justification='center', text_color='white')
+                                    sg.Text("61 kW at 7.3kWh", font=('Lato', 20), key='POWER', justification='center', text_color='white')
                                 ]
                             ]
     
     chargingTimeLayout =   [
                                 [  
-                                    sg.Text("4 minutes until full", font=('ITC Avant Garde Std Md', 20), key='TIME', justification='center', text_color='white')
+                                    sg.Text("4 minutes until full", font=('Lato', 20), key='TIME', justification='center', text_color='white')
                                 ]
                             ]
 
@@ -137,11 +137,11 @@ def GUI():
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 640), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 645), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPower_window.TKroot["cursor"] = "none"
     chargingPower_window.hide()
 
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 689), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 694), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
@@ -243,20 +243,22 @@ async def statemachine(websocket):
                 window_chargingPercent.un_hide()
                 window_chargingPercentMark.un_hide()
                 while True:
-                    if percent == 10:
-                        window_chargingPercent.move(110, 245)
-                        window_chargingPercentMark.move(306, 350)
-                    elif percent == 99:
+                    if percent >= 10:
+                        window_chargingPercent.move(60, 245)
+                        window_chargingPercentMark.move(330, 350)                     
+                    if percent > 99:
                         break
                     refreshWindows()
                     percent += 1
                     window_chargingPercent['PERCENT'].update(str(percent))
-                    if percent == 20:
+                    if percent >= 20 and percent < 30:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
                         window_chargingPercent['PERCENT'].update(text_color='yellow')
-                    time.sleep(1)
-                time.sleep(random.randint(5,15))
-                #state.set_state(States.S_FULLYCHARGED)
+                    elif percent >= 75:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
+                        window_chargingPercent['PERCENT'].update(text_color='#78BD76')
+                    time.sleep(0.20)
+                state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
             if lastState.get_state() != state.get_state():
