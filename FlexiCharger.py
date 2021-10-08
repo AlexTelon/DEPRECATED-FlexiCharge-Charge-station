@@ -131,7 +131,7 @@ def GUI():
     id_window.TKroot["cursor"] = "none"
     id_window.hide()
 
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
+    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, size=(285,285), background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
