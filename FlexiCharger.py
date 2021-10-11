@@ -5,14 +5,12 @@ import websockets
 import json
 import time
 import multiprocessing
-import io
 import PySimpleGUI as sg
 import platform
-import qrcode
 import nest_asyncio
 import random
-from datetime import datetime
-
+from OCPPfunctions import authorize, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction
+from GUI import GUI, generateQR, get_img_data, refreshWindows
 from StateHandler import States
 from StateHandler import StateHandler
 
@@ -21,22 +19,10 @@ if platform.system() != 'Windows':
 
     from mfrc522 import SimpleMFRC522
 
-from PIL import Image
-
-def get_img_data(f, maxsize=(480, 800)):
-    img = Image.open(f)
-    img.thumbnail(maxsize)
-    bio = io.BytesIO()
-    img.save(bio, format="PNG")
-    del img
-    return bio.getvalue()
-
 state = StateHandler()
 lastState = StateHandler()
-loop = asyncio.get_event_loop()
 sg.Window._move_all_windows = True
 response = NULL
-
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -56,117 +42,12 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
-url = "ws://54.220.194.65:1337/abc125"
+url = "ws://54.220.194.65:1337/ssb"
 
-#pLeaSe dOn't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
-def generateQR():
-    qr = qrcode.QRCode(
-        version=8,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=5,
-        border=4,
-    )
-    qr.add_data(chargerID)
-    qr.make(fit=True)
-    img_qrCodeGenerated = qr.make_image(fill_color="black", back_color="white")
-    #img_qrCodeGenerated = qrcode.make(chargerID)
-    type(img_qrCodeGenerated)
-    img_qrCodeGenerated.save("Pictures/QrCode.png")
-
-def GUI():
-    global chargerID
-    sg.theme('Black')
-    
-    backgroundLayout =  [
-                            [sg.Image(data=img_startingUp, key='IMAGE', size=(480, 800))]
-                        ]
-    
-    IdLayout =  [
-                    [  
-                        sg.Text(chargerID[0], font=('ITC Avant Garde Std Md', 33), key='ID0', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[1], font=('ITC Avant Garde Std Md', 33), key='ID1', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[2], font=('ITC Avant Garde Std Md', 33), key='ID2', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[3], font=('ITC Avant Garde Std Md', 33), key='ID3', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[4], font=('ITC Avant Garde Std Md', 33), key='ID4', justification='center', pad=(20,0), text_color='white'),
-                        sg.Text(chargerID[5], font=('ITC Avant Garde Std Md', 33), key='ID5', justification='center', pad=(20,0), text_color='white')
-                    ]
-                ]
-
-    qrCodeLayout =  [
-                        [   
-                            sg.Image(data=img_qrCode, key='QRCODE', size=(285,285)) 
-                        ]
-                    ]
-    
-    chargingPowerLayout =   [
-                                [  
-                                    sg.Text("61 kW at 7.3kWh", font=('Lato', 20), key='POWER', justification='center', text_color='white')
-                                ]
-                            ]
-    
-    chargingTimeLayout =   [
-                                [  
-                                    sg.Text("4 minutes until full", font=('Lato', 20), key='TIME', justification='center', text_color='white')
-                                ]
-                            ]
-
-    chargingPercentLayout = [
-                                [
-                                    sg.Text("0", font=('ITC Avant Garde Std Md', 160), key='PERCENT', text_color='red')
-                                ]
-                            ]
-   
-    chargingPercentMarkLayout = [
-                                    [
-                                        sg.Text("%", font=('ITC Avant Garde Std Md', 55), key='PERCENTMARK', text_color='red')
-                                    ]
-                                ]
-   
-    background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
-    if platform.system() != 'Windows':
-        background_window.Maximize()
-    background_window.TKroot["cursor"] = "none"
-
-    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(26,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    id_window.TKroot["cursor"] = "none"
-    id_window.hide()
-
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
-    qr_window.TKroot["cursor"] = "none"
-    qr_window.hide()
-
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 645), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    chargingPower_window.TKroot["cursor"] = "none"
-    chargingPower_window.hide()
-
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 694), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    chargingTime_window.TKroot["cursor"] = "none"
-    chargingTime_window.hide()
-
-    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 245), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    chargingPercent_window.TKroot["cursor"] = "none"
-    chargingPercent_window.hide()
-
-    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 350), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
-    chargingPercentMark_window.TKroot["cursor"] = "none"
-    chargingPercentMark_window.hide()
-
-    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window, chargingPercentMark_window
-
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI()
-
-def refreshWindows():
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent
-    window_back.refresh()
-    window_id.refresh()
-    window_qr.refresh()
-    window_chargingPower.refresh()
-    window_chargingTime.refresh()
-    window_chargingPercent.refresh()
-    window_chargingPercentMark.refresh()
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, state, lastState
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, state, lastState
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -175,7 +56,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -186,17 +67,17 @@ async def statemachine(websocket):
                 window_id['ID3'].update(chargerID[3])
                 window_id['ID4'].update(chargerID[4])
                 window_id['ID5'].update(chargerID[5])
-                generateQR()
+                generateQR(chargerID)
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_id.UnHide()
                 window_qr.UnHide()
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res)
+                    await reserveNow(websocket,res,state)
                 #time.sleep(random.randint(4,10))
                 #state.set_state(States.S_BUSY)
                 
@@ -206,7 +87,7 @@ async def statemachine(websocket):
                 window_back['IMAGE'].update(data=img_followInstructions)
                 window_id.hide()
                 window_qr.hide()
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                 
                 #this might need to change later but for now it is random
                 #resp = await websocket.recv()
@@ -221,7 +102,7 @@ async def statemachine(websocket):
                 window_back['IMAGE'].update(data=img_plugInCable)
                 window_id.hide()
                 window_qr.hide()
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                 time.sleep(random.randint(6,15))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
@@ -229,7 +110,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                 time.sleep(random.randint(10,15))
                 state.set_state(States.S_CHARGING)
 
@@ -247,9 +128,11 @@ async def statemachine(websocket):
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
                     if percent > 99:
-                        #await stopTransaction(websocket)
+                        window_chargingPercent.move(140, 245)
+                        window_chargingPercentMark.move(276, 350)    
+                        #await stopTransaction(websocket,response)
                         break
-                    refreshWindows()
+                    refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                     percent += 1
                     window_chargingPercent['PERCENT'].update(str(percent))
                     if percent >= 20 and percent < 30:
@@ -269,7 +152,7 @@ async def statemachine(websocket):
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                 time.sleep(4)
                 window_chargingPower.hide()
                 state.set_state(States.S_AVAILABLE)
@@ -278,135 +161,13 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_chargingCancelled)
-                refreshWindows()
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
 
         elif state.get_state() == States.S_AUTHORIZING:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_authorizing)
-                refreshWindows()
-
-async def authorize(idTag, websocket):
-    x = [2, "ssb", "Authorize", {"idTag": idTag}]
-    y = json.dumps(x)
-    await websocket.send(y)
-    response = await websocket.recv()
-
-async def send_heartbeat(websocket):
-    while True:
-        hb = [2, "ssb", "Heartbeat", {}]
-        z = json.dumps(hb)
-        print("Sending Heartbeat...")
-        await websocket.send(z)
-        print(await websocket.recv())
-        await asyncio.sleep(2)
-
-async def reserveNow(websocket, res):
-    global state
-    #check if already booked? 
-    try:
-        res_pared = json.loads(res)
-        print(res_pared)
-
-        pkg_accepted = [3, res_pared[1], "ReserveNow", {"status": "Accepted"}]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-        state.set_state(States.S_BUSY)
-    except:
-        pkg_rejected = [3, res_pared[1], "ReserveNow", {"status": "Rejected"}]
-        pkg_rejected_send = json.dumps(pkg_rejected)
-        await websocket.send(pkg_rejected_send)
-        #state.set_state(States.S_AVAILABLE)
-
-async def remoteStartTransaction(websocket):
-    try:
-        # Send fake request from server
-        pkg = ["abc125", "RemoteStart"]
-        pkg_send = json.dumps(pkg)
-        await websocket.send(pkg_send)
-        # Retrieve request
-        response = await websocket.recv()
-        response_parsed = json.loads(response)
-        print(response_parsed)
-
-        # Send back Accepted
-        pkg_accepted = [3,
-            response_parsed[1],
-            response_parsed[2],
-            {
-            "status": "Accepted"
-                               } ]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-        return True
-    except:
-        return False
-
-async def remoteStopTransaction(websocket):
-    try:
-        # Send fake request from server
-        #pkg = ["ssb", "RemoteStop"]
-        #pkg_send = json.dumps(pkg)
-        #await websocket.send(pkg_send)
-
-        # Retrieve request
-        response = await websocket.recv()
-        response_parsed = json.loads(response)
-        print(response_parsed)
-
-        # Send back Accepted
-        pkg_accepted = [3,
-            response_parsed[1],
-            response_parsed[2],
-            {
-            "status": "Accepted"
-                               } ]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-
-    except:
-        pass
-
-async def statusNotification(websocket):
-    pkg = [1, {'connectorID': 1,
-    'errorCode': 'NoError',
-    'info': 0,
-    'status': 'Available',
-    'timestamp': datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
-    'vendorId': 0,
-    'vendorErrorCode': 0}]
-    pkg_send = json.dumps(pkg)
-    await websocket.send(pkg_send)
-
-    response = await websocket.recv()
-    response_parsed = json.loads(response)
-    print(response_parsed)
-
-async def startTransaction(websocket):
-    x = [2, "ssb", "StartTransaction", {
-            "connectorId": 2,
-            "idTag": "B4A63CDF",
-            "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
-            "meterStart": 1,
-            "reservationId": 0
-        }]
-    y = json.dumps(x)
-    await websocket.send(y)
-    resp = await websocket.recv()
-    global response
-    response = json.loads(resp)
-    print(response)
-
-async def stopTransaction(websocket):
-    x = [2, response[1], "StopTransaction", {
-        "transactionId": response[3]['reservationID'],
-        "idTag": "B4A63CDF",
-        "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
-        "meterStop": 1
-    }]
-    y = json.dumps(x)
-    await websocket.send(y)
-    print("Response: " + await websocket.recv())
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)  
 
 def RFID():
     while True:
@@ -441,12 +202,12 @@ async def main():
             temp = resp_parsed[3]['chargerId']
             chargerID = list(str(temp))
             tasks = [
-                loop.create_task(statemachine(websocket)),
+                asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
             ]
-            loop.run_until_complete(asyncio.wait(tasks))
+            asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
     except:
         state.set_state(States.S_NOTAVAILABLE)
 
 nest_asyncio.apply()
-loop.run_until_complete(main())          
+asyncio.get_event_loop().run_until_complete(main())          
