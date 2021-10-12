@@ -33,20 +33,11 @@ async def send_heartbeat(ws):
 
 async def reserveNow(websocket):
         try:
-            tempj = [0]
-            tempj_send = json.dumps(tempj)
-            await websocket.send(tempj_send)
-
             res = await websocket.recv()
             res_parsed = json.loads(res)
             print(res_parsed)
             
-            pkg_accepted = [3,
-                res_parsed[1],
-                "ReserveNow",
-                { 
-                "status": "Accepted"
-                                   } ]
+            pkg_accepted = [3, res_parsed[1], "ReserveNow", { "status": "Accepted" }]
             pkg_accepted_send = json.dumps(pkg_accepted)
             await websocket.send(pkg_accepted_send)
         
@@ -79,13 +70,19 @@ async def connect():
         
         resp = await websocket.recv()
         resp_parsed = json.loads(resp)
-        chargerID = resp_parsed[2]['chargerId']
+        print(resp_parsed)
+        
+        resp2 = await websocket.recv()
+        resp_parsed2 = json.loads(resp2)
+        print(resp_parsed2)
+        
+        x = ['ssb', 'FreeCharger']
+        y = json.dumps(x)
+        await websocket.send(y)
         
         #l = list(str(chargerID))
         #print(l)
-        print(resp_parsed)
-        
-        
+
         boolean, expiryDate = await reserveNow(websocket)
         
         if boolean:
