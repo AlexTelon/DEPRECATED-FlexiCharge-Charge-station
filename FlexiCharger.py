@@ -201,10 +201,7 @@ async def main():
             resp2 = await websocket.recv()
             resp_parsed2 = json.loads(resp2)
             print(resp_parsed2)
-            for a in resp_parsed2:
-                print(type(a))
             nisse = json.loads(resp_parsed2[3]['data'])
-            print(nisse["chargerId"])
             print(nisse["chargerId"])
             temp = nisse["chargerId"]
             chargerID = list(str(temp))
