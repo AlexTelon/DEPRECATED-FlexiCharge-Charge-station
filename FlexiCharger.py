@@ -184,8 +184,13 @@ async def statemachine(websocket):
                     percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
 
                     chargingTime -= 1
-                    print(chargingTime)
-                    window_chargingTime['TIME'].update()
+                    chargingTimeMinutes = int(chargingTime / 60)
+                    
+                    if chargingTimeMinutes < 1:
+                        window_chargingTime['TIME'].update("<1 minutes until full")
+                    else:
+                        window_chargingTime['TIME'].update(str(chargingTimeMinutes) + " minutes until full")
+
                     if percent >= 0.21 and percent < 0.3:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
                         window_chargingPercent['PERCENT'].update(text_color='yellow')
