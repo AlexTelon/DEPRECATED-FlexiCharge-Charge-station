@@ -74,7 +74,7 @@ async def statemachine(websocket):
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_id.UnHide()
                 window_qr.UnHide()
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
@@ -207,7 +207,7 @@ async def main():
             print(resp_parsed2)
             nisse = json.loads(resp_parsed2[3]['data'])
             print(nisse)
-            chargerID = list(nisse["chargerId"])
+            chargerID = list(str(nisse["chargerId"]))
             chargingPrice = str(nisse['chargingPrice'])
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),

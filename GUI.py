@@ -55,7 +55,7 @@ def GUI(chargerID,img_startingUp,img_qrCode):
 
     priceLayout =   [
                         [
-                            sg.Text("Price: 137kr / kWh", font=('ITC Avant Garde Std Md', 15), key='PRICE', text_color='white')
+                            sg.Text("Price: 137.00kr / kWh", font=('ITC Avant Garde Std Md', 13), key='PRICE', text_color='white')
                         ]
                     ]
    
@@ -117,7 +117,7 @@ def get_img_data(f, maxsize=(480, 800)):
     del img
     return bio.getvalue()
 
-def refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark):
+def refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price):
     window_back.refresh()
     window_id.refresh()
     window_qr.refresh()
@@ -125,3 +125,4 @@ def refreshWindows(window_back, window_id, window_qr, window_chargingPower, wind
     window_chargingTime.refresh()
     window_chargingPercent.refresh()
     window_chargingPercentMark.refresh()
+    window_price.refresh()
