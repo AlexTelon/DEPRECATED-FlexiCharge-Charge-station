@@ -55,7 +55,7 @@ def GUI(chargerID,img_startingUp,img_qrCode):
 
     priceLayout =   [
                         [
-                            sg.Text("Current price: 1337kr / kWh", font=('ITC Avant Garde Std Md', 25), key='PRICE', text_color='black')
+                            sg.Text("Price: 137kr / kWh", font=('ITC Avant Garde Std Md', 15), key='PRICE', text_color='white')
                         ]
                     ]
    
@@ -88,7 +88,7 @@ def GUI(chargerID,img_startingUp,img_qrCode):
     chargingPercentMark_window.TKroot["cursor"] = "none"
     chargingPercentMark_window.hide()
 
-    price_window = sg.Window(title="FlexiChargeTopWindow", layout=priceLayout, location=(26,650), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    price_window = sg.Window(title="FlexiChargeTopWindow", layout=priceLayout, location=(24,610), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
     price_window.TKroot["cursor"] = "none"
     price_window.hide()
 

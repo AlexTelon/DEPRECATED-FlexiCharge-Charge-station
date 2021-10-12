@@ -42,6 +42,7 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
+chargingPrice = '0'
 url = "ws://54.220.194.65:1337/ssb"
 
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
@@ -68,6 +69,7 @@ async def statemachine(websocket):
                 window_id['ID3'].update(chargerID[3])
                 window_id['ID4'].update(chargerID[4])
                 window_id['ID5'].update(chargerID[5])
+                window_price['PRICE'].update("Price: " + chargingPrice + "kr / kWh")
                 generateQR(chargerID)
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_id.UnHide()
@@ -180,7 +182,7 @@ def RFID():
         GPIO.cleanup()
 
 async def main():
-    global loop, state, chargerID
+    global loop, state, chargerID, chargingPrice
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
@@ -200,9 +202,13 @@ async def main():
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
             print(resp_parsed)
-            print(resp_parsed[3]['chargerId'])
-            temp = resp_parsed[3]['chargerId']
-            chargerID = list(str(temp))
+            resp2 = await websocket.recv()
+            resp_parsed2 = json.loads(resp2)
+            print(resp_parsed2)
+            nisse = json.loads(resp_parsed2[3]['data'])
+            print(nisse)
+            chargerID = list(nisse["chargerId"])
+            chargingPrice = str(nisse['chargingPrice'])
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
