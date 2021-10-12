@@ -198,13 +198,15 @@ async def main():
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
             print(resp_parsed)
-            resp2 = await websocket.recv()
-            resp_parsed2 = json.loads(resp2)
-            print(resp_parsed2)
-            nisse = json.loads(resp_parsed2[3]['data'])
-            print(nisse["chargerId"])
-            temp = nisse["chargerId"]
-            chargerID = list(str(temp))
+            dataTransfer = await websocket.recv()
+            dataTransfer_parsed = json.loads(dataTransfer)
+            print(dataTransfer_parsed)
+            chargerInfo = json.loads(dataTransfer_parsed[3]['data'])
+            print(chargerInfo["chargerId"])
+            print(chargerInfo["chargingPrice"])
+            tempId = chargerInfo["chargerId"]
+            tempPrice = chargerInfo["chargingPrice"]
+            chargerID = list(str(tempId))
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
