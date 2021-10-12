@@ -166,6 +166,7 @@ async def statemachine(websocket):
                 window_chargingPercentMark.un_hide()
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
+                chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
                 while True:
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
@@ -182,7 +183,7 @@ async def statemachine(websocket):
                     chargedkWh += chargingSpeed[randomSpeed] / 60
                     percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
 
-                    chargingTime= chargingCapacity[randomSpeed] * (100 - percent)
+                    chargingTime -= 1
                     print(chargingTime)
                     window_chargingTime['TIME'].update()
                     if percent >= 0.21 and percent < 0.3:
@@ -191,7 +192,7 @@ async def statemachine(websocket):
                     elif percent >= 0.76:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
-                    time.sleep(0.20)
+                    time.sleep(0.10)
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
