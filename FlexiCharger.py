@@ -43,6 +43,7 @@ img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
+chargerPrice = ['0']
 
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI(chargerID,img_startingUp,img_qrCode)
 
@@ -178,7 +179,7 @@ def RFID():
         GPIO.cleanup()
 
 async def main():
-    global loop, state, chargerID
+    global loop, state, chargerID, chargerPrice
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
@@ -207,6 +208,7 @@ async def main():
             tempId = chargerInfo["chargerId"]
             tempPrice = chargerInfo["chargingPrice"]
             chargerID = list(str(tempId))
+            chargerPrice = list(str(tempPrice))
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
