@@ -44,10 +44,10 @@ img_Busy = get_img_data('Pictures/Busy.png')
 chargerID = ['0','0','0','0','0','0']
 url = "ws://54.220.194.65:1337/ssb"
 
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI(chargerID,img_startingUp,img_qrCode)
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, state, lastState
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -61,6 +61,7 @@ async def statemachine(websocket):
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
+                window_price.un_hide()
                 window_id['ID0'].update(chargerID[0])
                 window_id['ID1'].update(chargerID[1])
                 window_id['ID2'].update(chargerID[2])
@@ -85,6 +86,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_followInstructions)
+                window_price.hide()
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
