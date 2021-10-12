@@ -76,9 +76,10 @@ async def statemachine(websocket):
                 
                 res = await websocket.recv()
                 res_pared = json.loads(res)
-                #print(res_pared)
+                print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res,state)
+                    global response
+                    response = await reserveNow(websocket,res,state)
                 #time.sleep(random.randint(4,10))
                 #state.set_state(States.S_BUSY)
                 
@@ -94,7 +95,7 @@ async def statemachine(websocket):
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
-                    #await startTransaction(websocket)
+                    await startTransaction(websocket, response)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -131,7 +132,7 @@ async def statemachine(websocket):
                     if percent > 99:
                         window_chargingPercent.move(140, 245)
                         window_chargingPercentMark.move(276, 350)    
-                        #await stopTransaction(websocket,response)
+                        await stopTransaction(websocket, response)
                         break
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
                     percent += 1
@@ -196,19 +197,17 @@ async def main():
             "meterSerialNumber": "avt.001.13.1.01" }]
             pkg_send = json.dumps(pkg)
             await websocket.send(pkg_send)
+            
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
-            print(resp_parsed)
+
             dataTransfer = await websocket.recv()
             dataTransfer_parsed = json.loads(dataTransfer)
-            print(dataTransfer_parsed)
+
             chargerInfo = json.loads(dataTransfer_parsed[3]['data'])
-            print(chargerInfo["chargerId"])
-            print(chargerInfo["chargingPrice"])
-            tempId = chargerInfo["chargerId"]
-            tempPrice = chargerInfo["chargingPrice"]
-            chargerID = list(str(tempId))
-            chargerPrice = list(str(tempPrice))
+
+            chargerID = list(str(chargerInfo["chargerId"]))
+            chargerPrice = list(str(chargerInfo["chargingPrice"]))
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),

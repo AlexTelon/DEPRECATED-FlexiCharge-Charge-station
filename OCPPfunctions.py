@@ -30,11 +30,13 @@ async def reserveNow(websocket, res, state):
         pkg_accepted_send = json.dumps(pkg_accepted)
         await websocket.send(pkg_accepted_send)
         state.set_state(States.S_BUSY)
+        return res_pared
     except:
         pkg_rejected = [3, res_pared[1], "ReserveNow", {"status": "Rejected"}]
         pkg_rejected_send = json.dumps(pkg_rejected)
         await websocket.send(pkg_rejected_send)
         #state.set_state(States.S_AVAILABLE)
+        return NULL
 
 async def remoteStartTransaction(websocket):
     try:
@@ -100,13 +102,13 @@ async def statusNotification(websocket):
     response_parsed = json.loads(response)
     print(response_parsed)
 
-async def startTransaction(websocket):
+async def startTransaction(websocket, json_data):
     x = [2, "ssb", "StartTransaction", {
-            "connectorId": 2,
-            "idTag": "B4A63CDF",
+            "connectorId": json_data[3]['connectorID'],
+            "idTag": json_data[3]['idTag'],
             "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
             "meterStart": 1,
-            "reservationId": 0
+            "reservationId": json_data[3]['reservationID']
         }]
     y = json.dumps(x)
     await websocket.send(y)
@@ -115,9 +117,9 @@ async def startTransaction(websocket):
     response = json.loads(resp)
     print(response)
 
-async def stopTransaction(websocket, response):
-    x = [2, response[1], "StopTransaction", {
-        "transactionId": response[3]['reservationID'],
+async def stopTransaction(websocket, json_data):
+    x = [2, json_data[1], "StopTransaction", {
+        "transactionId": json_data[3]['reservationID'],
         "idTag": "B4A63CDF",
         "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
         "meterStop": 1
