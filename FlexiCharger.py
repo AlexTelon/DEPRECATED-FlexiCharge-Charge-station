@@ -16,7 +16,6 @@ from StateHandler import StateHandler
 
 if platform.system() != 'Windows':
     import RPi.GPIO as GPIO
-
     from mfrc522 import SimpleMFRC522
 
 state = StateHandler()
@@ -43,12 +42,13 @@ img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
 chargingPrice = '0'
+chargingSpeed = ['2.8', '3.2', '3.7', '4.6', '6.6', '7.2', '7.4', '11.0', '22.0', '50.0']
 url = "ws://54.220.194.65:1337/ssb"
 
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -58,6 +58,36 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+            while True:
+                try:
+                    async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+                        state.set_state(States.S_AVAILABLE)
+                        print("Connected.")
+                        pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
+                        "chargePointVendor": "AVT-Company",
+                        "chargePointModel": "AVT-Express",
+                        "chargePointSerialNumber": "avt.001.13.1",
+                        "chargeBoxSerialNumber": "avt.001.13.1.01",
+                        "firmwareVersion": "0.9.87",
+                        "iccid": "",
+                        "imsi": "",
+                        "meterType": "AVT NQC-ACDC",
+                        "meterSerialNumber": "avt.001.13.1.01" }]
+                        pkg_send = json.dumps(pkg)
+                        await websocket.send(pkg_send)
+                        resp = await websocket.recv()
+                        resp_parsed = json.loads(resp)
+                        print(resp_parsed)
+                        resp2 = await websocket.recv()
+                        resp_parsed2 = json.loads(resp2)
+                        print(resp_parsed2)
+                        nisse = json.loads(resp_parsed2[3]['data'])
+                        print(nisse)
+                        chargerID = list(str(nisse["chargerId"]))
+                        chargingPrice = str(nisse['chargingPrice'])
+                except:
+                    pass
+                time.sleep(20)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -199,16 +229,19 @@ async def main():
             "meterSerialNumber": "avt.001.13.1.01" }]
             pkg_send = json.dumps(pkg)
             await websocket.send(pkg_send)
+
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
             print(resp_parsed)
+
             resp2 = await websocket.recv()
             resp_parsed2 = json.loads(resp2)
             print(resp_parsed2)
-            nisse = json.loads(resp_parsed2[3]['data'])
-            print(nisse)
-            chargerID = list(str(nisse["chargerId"]))
-            chargingPrice = str(nisse['chargingPrice'])
+
+            chargingInfo = json.loads(resp_parsed2[3]['data'])
+            print(chargingInfo)
+            chargerID = list(str(chargingInfo["chargerId"]))
+            chargingPrice = str(chargingInfo['chargingPrice'])
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
