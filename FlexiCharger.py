@@ -1,5 +1,4 @@
 import asyncio
-from asyncio.windows_events import NULL
 import websockets
 import json
 import time
@@ -20,7 +19,7 @@ if platform.system() != 'Windows':
 state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
-response = NULL
+response = 0
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
