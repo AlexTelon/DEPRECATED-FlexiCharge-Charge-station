@@ -22,6 +22,7 @@ state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
 response = NULL
+uniqueID = NULL
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -49,7 +50,8 @@ url = "ws://54.220.194.65:1337/ssb"
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice, response, uniqueID
+
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -78,6 +80,8 @@ async def statemachine(websocket):
                         await websocket.send(pkg_send)
                         resp = await websocket.recv()
                         resp_parsed = json.loads(resp)
+                        uniqueID = resp_parsed[1]
+                        
                         print(resp_parsed)
                         resp2 = await websocket.recv()
                         resp_parsed2 = json.loads(resp2)
@@ -108,13 +112,13 @@ async def statemachine(websocket):
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
                 state.set_state(States.S_CHARGING)
-                """res = await websocket.recv()
+                res = await websocket.recv()
                 res_pared = json.loads(res)
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res,state)
+                    response = await reserveNow(websocket,res,state)
                 #time.sleep(random.randint(4,10))
-                #state.set_state(States.S_BUSY)"""
+                #state.set_state(States.S_BUSY)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -129,7 +133,7 @@ async def statemachine(websocket):
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
-                    #await startTransaction(websocket)
+                    response = await startTransaction(websocket, response, uniqueID)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -174,7 +178,7 @@ async def statemachine(websocket):
                     if percent > 0.99:
                         window_chargingPercent.move(140, 245)
                         window_chargingPercentMark.move(276, 350)    
-                        #await stopTransaction(websocket,response)
+                        await stopTransaction(websocket, response, uniqueID)
                         break
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
@@ -194,7 +198,7 @@ async def statemachine(websocket):
                     if percent >= 0.21 and percent < 0.3:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
                         window_chargingPercent['PERCENT'].update(text_color='yellow')
-                    elif percent >= 0.76:
+                    elif percent >= 0.75:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
                     time.sleep(0.10)
@@ -239,6 +243,10 @@ async def main():
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
             print("Connected.")
+            x = ['ssb', 'FreeCharger']
+            y = json.dumps(x)
+            await websocket.send(y)
+            
             pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
             "chargePointVendor": "AVT-Company",
             "chargePointModel": "AVT-Express",

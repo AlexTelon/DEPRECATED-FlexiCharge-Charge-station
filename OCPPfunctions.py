@@ -41,9 +41,9 @@ async def reserveNow(websocket, res, state):
 async def remoteStartTransaction(websocket):
     try:
         # Send fake request from server
-        pkg = ["ssb", "RemoteStart"]
-        pkg_send = json.dumps(pkg)
-        await websocket.send(pkg_send)
+        #pkg = ["ssb", "RemoteStart"]
+        #pkg_send = json.dumps(pkg)
+        #await websocket.send(pkg_send)
         # Retrieve request
         response = await websocket.recv()
         response_parsed = json.loads(response)
@@ -102,8 +102,8 @@ async def statusNotification(websocket):
     response_parsed = json.loads(response)
     print(response_parsed)
 
-async def startTransaction(websocket, json_data):
-    x = [2, "ssb", "StartTransaction", {
+async def startTransaction(websocket, json_data, uniqueID):
+    x = [2, uniqueID, "StartTransaction", {
             "connectorId": json_data[3]['connectorID'],
             "idTag": json_data[3]['idTag'],
             "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
@@ -113,16 +113,16 @@ async def startTransaction(websocket, json_data):
     y = json.dumps(x)
     await websocket.send(y)
     resp = await websocket.recv()
-    global response
-    response = json.loads(resp)
-    print(response)
+    return json.loads(resp)
 
-async def stopTransaction(websocket, json_data):
-    x = [2, json_data[1], "StopTransaction", {
-        "transactionId": json_data[3]['reservationID'],
-        "idTag": "B4A63CDF",
+async def stopTransaction(websocket, json_data, uniqueID):
+    print("stoptrans")
+    print(json_data)
+    x = [2, uniqueID, "StopTransaction", {
+        "transactionId": json_data[3]['transactionId'],
+        "idTag": json_data[3]['idTagInfo'],
         "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
-        "meterStop": 1
+        "meterStop": 2
     }]
     y = json.dumps(x)
     await websocket.send(y)
