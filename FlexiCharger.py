@@ -167,7 +167,7 @@ async def statemachine(websocket):
                 window_chargingPercentMark.un_hide()
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
-                chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
+                chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
 
