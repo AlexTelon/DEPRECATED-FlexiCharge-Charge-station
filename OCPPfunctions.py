@@ -129,16 +129,17 @@ async def stopTransaction(websocket, json_data, uniqueID):
     print("Response: " + await websocket.recv())
 
 async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
+    b = [{ "transactionId": 346, "latestMeterValue": latestCharge, "CurrentChargePercentage": currentCharge }]
+
+    y = json.dumps(b)
+    print(y)
+
     x = [   2, 
             dataUniqueID, 
             "DataTransfer",
             { 
                 "messageId": "ChargeLevelUpdate",
-                "data": {
-                            "transactionId": 346,
-                            "latestMeterValue": latestCharge,
-                            "CurrentChargePercentage": currentCharge
-                        } 
+                "data": y
             }
         ]
     y = json.dumps(x)
