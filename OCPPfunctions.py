@@ -20,8 +20,6 @@ async def send_heartbeat(websocket):
         await asyncio.sleep(2)
 
 async def reserveNow(websocket, res, state):
-    #global state
-    #check if already booked? 
     try:
         res_pared = json.loads(res)
         print(res_pared)
@@ -40,11 +38,6 @@ async def reserveNow(websocket, res, state):
 
 async def remoteStartTransaction(websocket):
     try:
-        # Send fake request from server
-        #pkg = ["ssb", "RemoteStart"]
-        #pkg_send = json.dumps(pkg)
-        #await websocket.send(pkg_send)
-        # Retrieve request
         response = await websocket.recv()
         response_parsed = json.loads(response)
         print("Remotestart: ")
@@ -65,11 +58,6 @@ async def remoteStartTransaction(websocket):
 
 async def remoteStopTransaction(websocket, event):
     try:
-        # Send fake request from server
-        #pkg = ["ssb", "RemoteStop"]
-        #pkg_send = json.dumps(pkg)
-        #await websocket.send(pkg_send)
-
         # Retrieve request
         response = await websocket.recv()
         response_parsed = json.loads(response)
