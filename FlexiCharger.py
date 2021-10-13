@@ -1,7 +1,5 @@
 import asyncio
-from asyncio.events import get_event_loop
 from asyncio.windows_events import NULL
-from PySimpleGUI.PySimpleGUI import theme_progress_bar_border_width
 import websockets
 import json
 import time
@@ -165,6 +163,11 @@ async def statemachine(websocket):
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
                 window_chargingPercentMark.un_hide()
+
+                window_chargingPercent['PERCENT'].update(value='0')
+                window_chargingPercent.move(140, 245)
+                window_chargingPercentMark.move(276, 350) 
+
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
                 chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
@@ -172,26 +175,25 @@ async def statemachine(websocket):
                 countTo9 = 0
 
                 while True:
-                    temp = int(percent * 100)
-                    window_chargingPercent['PERCENT'].update(value=str(temp))
+                    window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+
                     if percent < 0.20:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='red')
                         window_chargingPercent['PERCENT'].update(text_color='red')
-                    elif percent >= 0.21 and percent < 0.3:
+                    elif percent >= 0.20 and percent < 0.3:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
                         window_chargingPercent['PERCENT'].update(text_color='yellow')
-                    elif percent >= 0.76:
+                    elif percent >= 0.75:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
-                    if percent > 0.99:
-                        window_chargingPercent.move(140, 245)
-                        window_chargingPercentMark.move(276, 350)    
+                    if percent > 0.99:   
                         #await stopTransaction(websocket,response)
                         break
+
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
                     chargedkWh += chargingSpeed[randomSpeed] / 60
