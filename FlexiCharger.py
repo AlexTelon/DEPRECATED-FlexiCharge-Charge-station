@@ -169,10 +169,21 @@ async def statemachine(websocket):
                 chargedkWh = 0
                 chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
+
+
                 while True:
                     temp = int(percent * 100)
                     window_chargingPercent['PERCENT'].update(value=str(temp))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+                    if percent < 0.20:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='red')
+                        window_chargingPercent['PERCENT'].update(text_color='red')
+                    elif percent >= 0.21 and percent < 0.3:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
+                        window_chargingPercent['PERCENT'].update(text_color='yellow')
+                    elif percent >= 0.76:
+                        window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
+                        window_chargingPercent['PERCENT'].update(text_color='#78BD76')
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
@@ -194,12 +205,6 @@ async def statemachine(websocket):
                     else:
                         window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full")
 
-                    if percent >= 0.21 and percent < 0.3:
-                        window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
-                        window_chargingPercent['PERCENT'].update(text_color='yellow')
-                    elif percent >= 0.76:
-                        window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
-                        window_chargingPercent['PERCENT'].update(text_color='#78BD76')
                     time.sleep(0.20)
                 state.set_state(States.S_FULLYCHARGED)
 
