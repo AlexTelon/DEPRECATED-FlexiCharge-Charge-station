@@ -101,14 +101,14 @@ async def statemachine(websocket):
                 window_id['ID3'].update(chargerID[3])
                 window_id['ID4'].update(chargerID[4])
                 window_id['ID5'].update(chargerID[5])
-                window_price['PRICE'].update("Price: " + chargingPrice + "kr / kWh")
+                window_price['PRICE'].update("Price: " + str(chargingPrice) + "kr / kWh")
                 generateQR(chargerID)
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_id.UnHide()
                 window_qr.UnHide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
-                state.set_state(States.S_CHARGING)
+                #state.set_state(States.S_CHARGING)
                 """res = await websocket.recv()
                 res_pared = json.loads(res)
                 #print(res_pared)
@@ -271,7 +271,7 @@ async def main():
             chargingInfo = json.loads(dataTransfer_parsed[3]['data'])
             print(chargingInfo)
             chargerID = list(str(chargingInfo["chargerId"]))
-            chargingPrice = str(chargingInfo['chargingPrice'])
+            chargingPrice = float(chargingInfo['chargingPrice']) / 100
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
