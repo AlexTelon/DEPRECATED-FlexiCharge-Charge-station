@@ -1,6 +1,7 @@
 import asyncio
 from asyncio.events import get_event_loop
 from asyncio.windows_events import NULL
+from PySimpleGUI.PySimpleGUI import theme_progress_bar_border_width
 import websockets
 import json
 import time
@@ -167,7 +168,11 @@ async def statemachine(websocket):
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
                 chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
+                test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 while True:
+                    temp = int(percent * 100)
+                    window_chargingPercent['PERCENT'].update(value=str(temp))
+                    window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
@@ -178,8 +183,6 @@ async def statemachine(websocket):
                         break
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
-                    window_chargingPercent['PERCENT'].update(str(int(percent * 100)))
-                    window_chargingPower['POWER'].update(str(round(chargedkWh,1)) + "kWh at " + str(chargingSpeed[randomSpeed]) + "kW")
                     chargedkWh += chargingSpeed[randomSpeed] / 60
                     percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
 
@@ -187,9 +190,9 @@ async def statemachine(websocket):
                     chargingTimeMinutes = int(chargingTime / 60)
                     
                     if chargingTimeMinutes < 1:
-                        window_chargingTime['TIME'].update("<1 minutes until full")
+                        window_chargingTime['TIME'].update(value="<1 minutes until full")
                     else:
-                        window_chargingTime['TIME'].update(str(chargingTimeMinutes) + " minutes until full")
+                        window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full")
 
                     if percent >= 0.21 and percent < 0.3:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
@@ -197,7 +200,7 @@ async def statemachine(websocket):
                     elif percent >= 0.76:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
-                    time.sleep(0.10)
+                    time.sleep(0.20)
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
