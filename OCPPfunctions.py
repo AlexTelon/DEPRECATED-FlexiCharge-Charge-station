@@ -60,7 +60,7 @@ async def remoteStartTransaction(websocket):
     except:
         return False
 
-async def remoteStopTransaction(websocket):
+async def remoteStopTransaction(websocket, event):
     try:
         # Send fake request from server
         #pkg = ["ssb", "RemoteStop"]
@@ -81,6 +81,8 @@ async def remoteStopTransaction(websocket):
                                } ]
         pkg_accepted_send = json.dumps(pkg_accepted)
         await websocket.send(pkg_accepted_send)
+
+        event.set()
 
     except:
         pass

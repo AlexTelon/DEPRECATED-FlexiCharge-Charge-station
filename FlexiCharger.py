@@ -2,7 +2,6 @@ import asyncio
 import websockets
 import json
 import time
-import multiprocessing
 import PySimpleGUI as sg
 import platform
 import nest_asyncio
@@ -33,7 +32,6 @@ img_disconnectingFromCar = get_img_data('Pictures/DisconnectingFromCar.png')
 img_followInstructions = get_img_data('Pictures/FollowInstructions.png')
 img_fullyCharged = get_img_data('Pictures/FullyCharged.png')
 img_plugInCable = get_img_data('Pictures/PlugInCable.png')
-img_rfidNotValid = get_img_data('Pictures/RFIDnotValid.png')
 img_unableToCharge = get_img_data('Pictures/UnableToCharge.png')
 img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
@@ -43,6 +41,7 @@ chargingPrice = 0
 chargingCapacity = [4.4, 22.5, 27.2, 33.5, 40.0, 60.0, 64.0, 95.0, 95.0, 100.0]
 chargingSpeed = [2.8, 3.2, 3.7, 4.6, 6.6, 7.2, 7.4, 11.0, 22.0, 50.0]
 url = "ws://54.220.194.65:1337/ssb"
+loop = asyncio.get_event_loop()
 
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
@@ -75,12 +74,11 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
-                state.set_state(States.S_CHARGING)
-                """res = await websocket.recv()
+                res = await websocket.recv()
                 res_pared = json.loads(res)
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res,state)"""
+                    await reserveNow(websocket,res,state)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -95,7 +93,7 @@ async def statemachine(websocket):
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
-                    #await startTransaction(websocket)
+                    await startTransaction(websocket)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -122,10 +120,6 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
                 
-                window_price.hide() 
-                window_id.hide()
-                window_qr.hide()
-                
                 window_chargingPower.un_hide()
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
@@ -141,10 +135,16 @@ async def statemachine(websocket):
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
 
+                event = asyncio.Event()
+                asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
+
                 while True:
                     window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
-
+                    if event.is_set():
+                        print("stopped")
+                        await stopTransaction(websocket, response)
+                        break
                     if percent < 0.20:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='red')
                         window_chargingPercent['PERCENT'].update(text_color='red')
@@ -208,14 +208,6 @@ async def statemachine(websocket):
                 window_back['IMAGE'].update(data=img_authorizing)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)  
 
-def RFID():
-    while True:
-        reader = SimpleMFRC522()
-        id, text = reader.read()
-        print("Tag ID:", id)
-        print("Tag text:", text)
-        GPIO.cleanup()
-
 async def main():
     global loop, state, chargerID, chargingPrice
     try:
@@ -248,12 +240,12 @@ async def main():
             chargerID = list(str(chargingInfo["chargerId"]))
             chargingPrice = float(chargingInfo['chargingPrice']) / 100
             tasks = [
-                asyncio.get_event_loop().create_task(statemachine(websocket)),
+                loop.create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
             ]
-            asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
+            loop.run_until_complete(asyncio.wait(tasks))
     except:
         state.set_state(States.S_NOTAVAILABLE)
 
 nest_asyncio.apply()
-asyncio.get_event_loop().run_until_complete(main())          
+loop.run_until_complete(main())          
