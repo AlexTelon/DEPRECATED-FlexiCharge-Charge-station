@@ -21,8 +21,10 @@ if platform.system() != 'Windows':
 state = StateHandler()
 lastState = StateHandler()
 sg.Window._move_all_windows = True
-response = NULL
-uniqueID = NULL
+response = 0
+uniqueID = 0
+
+loop = asyncio.get_event_loop()
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -50,7 +52,7 @@ url = "ws://54.220.194.65:1337/ssb"
 window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice, response, uniqueID
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice, response, uniqueID, loop
 
     while True:
         if state.get_state() == States.S_STARTUP:
@@ -92,7 +94,7 @@ async def statemachine(websocket):
                         chargingPrice = str(nisse['chargingPrice'])
                 except:
                     pass
-                time.sleep(20)
+                await asyncio.sleep(20)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -143,7 +145,7 @@ async def statemachine(websocket):
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
-                time.sleep(random.randint(6,15))
+                time.sleep(random.randint(2,5))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
         elif state.get_state() == States.S_CONNECTINGTOCAR:
@@ -151,7 +153,7 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
-                time.sleep(random.randint(10,15))
+                time.sleep(random.randint(2,5))
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
@@ -171,14 +173,24 @@ async def statemachine(websocket):
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
                 chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
+                
+                
+                event = asyncio.Event()
+                
+                asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
+                
                 while True:
+                    if event.is_set():
+                        print("stopped")
+                        await stopTransaction(websocket, response, uniqueID)
+                        break
+                
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
                     if percent > 0.99:
                         window_chargingPercent.move(140, 245)
                         window_chargingPercentMark.move(276, 350)    
-                        await stopTransaction(websocket, response, uniqueID)
                         break
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
@@ -201,7 +213,7 @@ async def statemachine(websocket):
                     elif percent >= 0.75:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
-                    time.sleep(0.10)
+                    await asyncio.sleep(0.10)
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
@@ -273,12 +285,12 @@ async def main():
             chargerID = list(str(chargingInfo["chargerId"]))
             chargingPrice = str(chargingInfo['chargingPrice'])
             tasks = [
-                asyncio.get_event_loop().create_task(statemachine(websocket)),
+                loop.create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),
             ]
-            asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
+            loop.run_until_complete(asyncio.wait(tasks))
     except:
         state.set_state(States.S_NOTAVAILABLE)
 
 nest_asyncio.apply()
-asyncio.get_event_loop().run_until_complete(main())          
+loop.run_until_complete(main())          
