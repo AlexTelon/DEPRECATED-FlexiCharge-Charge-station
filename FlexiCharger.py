@@ -212,7 +212,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_fullyCharged)
-                window_chargingPower['POWER'].update("64 kW used")
+                window_chargingPower['POWER'].update(str(round(chargedkWh, 1)) + " kW used")
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
