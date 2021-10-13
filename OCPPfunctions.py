@@ -36,7 +36,7 @@ async def reserveNow(websocket, res, state):
         pkg_rejected_send = json.dumps(pkg_rejected)
         await websocket.send(pkg_rejected_send)
         #state.set_state(States.S_AVAILABLE)
-        return NULL
+        return 0
 
 async def remoteStartTransaction(websocket):
     try:
@@ -86,8 +86,6 @@ async def remoteStopTransaction(websocket, event):
         
         event.set()
 
-        event.set()
-
     except:
         pass
 
@@ -126,6 +124,23 @@ async def stopTransaction(websocket, json_data, uniqueID):
         "timestamp": datetime.today().strftime('%Y-%m-%d-%H:%M:%S'),
         "meterStop": 2
     }]
+    y = json.dumps(x)
+    await websocket.send(y)
+    print("Response: " + await websocket.recv())
+
+async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
+    x = [   2, 
+            dataUniqueID, 
+            "DataTransfer",
+            { 
+                "messageId": "ChargeLevelUpdate",
+                "data": {
+                            "transactionId": 346,
+                            "latestMeterValue": latestCharge,
+                            "CurrentChargePercentage": currentCharge
+                        } 
+            }
+        ]
     y = json.dumps(x)
     await websocket.send(y)
     print("Response: " + await websocket.recv())
