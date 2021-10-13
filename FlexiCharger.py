@@ -16,7 +16,6 @@ from StateHandler import StateHandler
 
 if platform.system() != 'Windows':
     import RPi.GPIO as GPIO
-
     from mfrc522 import SimpleMFRC522
 
 state = StateHandler()
@@ -42,13 +41,15 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
+chargingPrice = '0'
+chargingCapacity = [4.4, 22.5, 27.2, 33.5, 40.0, 60.0, 64.0, 95.0, 95.0, 100.0]
+chargingSpeed = [2.8, 3.2, 3.7, 4.6, 6.6, 7.2, 7.4, 11.0, 22.0, 50.0]
 url = "ws://54.220.194.65:1337/ssb"
-chargerPrice = ['0']
 
-window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark = GUI(chargerID,img_startingUp,img_qrCode)
+window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price = GUI(chargerID,img_startingUp,img_qrCode)
 
 async def statemachine(websocket):
-    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, state, lastState
+    global window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price, state, lastState, chargerID, chargingPrice
     while True:
         if state.get_state() == States.S_STARTUP:
             pass
@@ -58,44 +59,77 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+            while True:
+                try:
+                    async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
+                        state.set_state(States.S_AVAILABLE)
+                        print("Connected.")
+                        pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
+                        "chargePointVendor": "AVT-Company",
+                        "chargePointModel": "AVT-Express",
+                        "chargePointSerialNumber": "avt.001.13.1",
+                        "chargeBoxSerialNumber": "avt.001.13.1.01",
+                        "firmwareVersion": "0.9.87",
+                        "iccid": "",
+                        "imsi": "",
+                        "meterType": "AVT NQC-ACDC",
+                        "meterSerialNumber": "avt.001.13.1.01" }]
+                        pkg_send = json.dumps(pkg)
+                        await websocket.send(pkg_send)
+                        resp = await websocket.recv()
+                        resp_parsed = json.loads(resp)
+                        print(resp_parsed)
+                        resp2 = await websocket.recv()
+                        resp_parsed2 = json.loads(resp2)
+                        print(resp_parsed2)
+                        nisse = json.loads(resp_parsed2[3]['data'])
+                        print(nisse)
+                        chargerID = list(str(nisse["chargerId"]))
+                        chargingPrice = str(nisse['chargingPrice'])
+                except:
+                    pass
+                time.sleep(20)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
+                window_price.un_hide()
                 window_id['ID0'].update(chargerID[0])
                 window_id['ID1'].update(chargerID[1])
                 window_id['ID2'].update(chargerID[2])
                 window_id['ID3'].update(chargerID[3])
                 window_id['ID4'].update(chargerID[4])
                 window_id['ID5'].update(chargerID[5])
+                window_price['PRICE'].update("Price: " + chargingPrice + "kr / kWh")
                 generateQR(chargerID)
                 window_back['IMAGE'].update(data=img_chargerID)
                 window_id.UnHide()
                 window_qr.UnHide()
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
-                res = await websocket.recv()
+                state.set_state(States.S_CHARGING)
+                """res = await websocket.recv()
                 res_pared = json.loads(res)
-                print(res_pared)
+                #print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    global response
-                    response = await reserveNow(websocket,res,state)
+                    await reserveNow(websocket,res,state)
                 #time.sleep(random.randint(4,10))
-                #state.set_state(States.S_BUSY)
+                #state.set_state(States.S_BUSY)"""
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_followInstructions)
+                window_price.hide()
                 window_id.hide()
                 window_qr.hide()
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
                 #this might need to change later but for now it is random
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
-                    await startTransaction(websocket, response)
+                    #await startTransaction(websocket)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -104,7 +138,7 @@ async def statemachine(websocket):
                 window_back['IMAGE'].update(data=img_plugInCable)
                 window_id.hide()
                 window_qr.hide()
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 time.sleep(random.randint(6,15))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
@@ -112,7 +146,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 time.sleep(random.randint(10,15))
                 state.set_state(States.S_CHARGING)
 
@@ -121,29 +155,49 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
+                
+                window_price.hide() #-------------------------------------------
+                window_id.hide()
+                window_qr.hide()
+                
                 window_chargingPower.un_hide()
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
                 window_chargingPercentMark.un_hide()
+                randomSpeed = random.randint(0,9)
+                chargedkWh = 0
+                chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
                 while True:
-                    if percent >= 10:
+                    if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
                         window_chargingPercentMark.move(330, 350)                     
-                    if percent > 99:
+                    if percent > 0.99:
                         window_chargingPercent.move(140, 245)
                         window_chargingPercentMark.move(276, 350)    
-                        await stopTransaction(websocket, response)
+                        #await stopTransaction(websocket,response)
                         break
-                    refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
-                    percent += 1
-                    window_chargingPercent['PERCENT'].update(str(percent))
-                    if percent >= 20 and percent < 30:
+                    refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
+
+                    window_chargingPercent['PERCENT'].update(str(int(percent * 100)))
+                    window_chargingPower['POWER'].update(str(round(chargedkWh,1)) + "kWh at " + str(chargingSpeed[randomSpeed]) + "kW")
+                    chargedkWh += chargingSpeed[randomSpeed] / 60
+                    percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
+
+                    chargingTime -= 1
+                    chargingTimeMinutes = int(chargingTime / 60)
+                    
+                    if chargingTimeMinutes < 1:
+                        window_chargingTime['TIME'].update("<1 minutes until full")
+                    else:
+                        window_chargingTime['TIME'].update(str(chargingTimeMinutes) + " minutes until full")
+
+                    if percent >= 0.21 and percent < 0.3:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='yellow')
                         window_chargingPercent['PERCENT'].update(text_color='yellow')
-                    elif percent >= 75:
+                    elif percent >= 0.76:
                         window_chargingPercentMark['PERCENTMARK'].update(text_color='#78BD76')
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
-                    time.sleep(0.20)
+                    time.sleep(0.10)
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
@@ -154,7 +208,7 @@ async def statemachine(websocket):
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 time.sleep(4)
                 window_chargingPower.hide()
                 state.set_state(States.S_AVAILABLE)
@@ -163,13 +217,13 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_chargingCancelled)
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
         elif state.get_state() == States.S_AUTHORIZING:
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_authorizing)
-                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)  
+                refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)  
 
 def RFID():
     while True:
@@ -180,7 +234,7 @@ def RFID():
         GPIO.cleanup()
 
 async def main():
-    global loop, state, chargerID, chargerPrice
+    global loop, state, chargerID, chargingPrice
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
@@ -197,17 +251,19 @@ async def main():
             "meterSerialNumber": "avt.001.13.1.01" }]
             pkg_send = json.dumps(pkg)
             await websocket.send(pkg_send)
-            
+
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
+            print(resp_parsed)
 
             dataTransfer = await websocket.recv()
             dataTransfer_parsed = json.loads(dataTransfer)
+            print(dataTransfer_parsed)
 
-            chargerInfo = json.loads(dataTransfer_parsed[3]['data'])
-
-            chargerID = list(str(chargerInfo["chargerId"]))
-            chargerPrice = list(str(chargerInfo["chargingPrice"]))
+            chargingInfo = json.loads(dataTransfer_parsed[3]['data'])
+            print(chargingInfo)
+            chargerID = list(str(chargingInfo["chargerId"]))
+            chargingPrice = str(chargingInfo['chargingPrice'])
             tasks = [
                 asyncio.get_event_loop().create_task(statemachine(websocket)),
                 #loop.create_task(send_heartbeat(websocket)),

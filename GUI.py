@@ -52,6 +52,12 @@ def GUI(chargerID,img_startingUp,img_qrCode):
                                         sg.Text("%", font=('ITC Avant Garde Std Md', 55), key='PERCENTMARK', text_color='red')
                                     ]
                                 ]
+
+    priceLayout =   [
+                        [
+                            sg.Text("Price: 137.00kr / kWh", font=('ITC Avant Garde Std Md', 13), key='PRICE', text_color='white')
+                        ]
+                    ]
    
     background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
     if platform.system() != 'Windows':
@@ -82,7 +88,11 @@ def GUI(chargerID,img_startingUp,img_qrCode):
     chargingPercentMark_window.TKroot["cursor"] = "none"
     chargingPercentMark_window.hide()
 
-    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window, chargingPercentMark_window
+    price_window = sg.Window(title="FlexiChargeTopWindow", layout=priceLayout, location=(24,610), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    price_window.TKroot["cursor"] = "none"
+    price_window.hide()
+
+    return background_window, id_window, qr_window, chargingPower_window, chargingTime_window, chargingPercent_window, chargingPercentMark_window, price_window
 
 #pLeaSe dOn't change any of the values in generateQR or x and y in GUI. It looks bad on the PC but works good on the Pi.
 def generateQR(chargerID):
@@ -107,7 +117,7 @@ def get_img_data(f, maxsize=(480, 800)):
     del img
     return bio.getvalue()
 
-def refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark):
+def refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price):
     window_back.refresh()
     window_id.refresh()
     window_qr.refresh()
@@ -115,3 +125,4 @@ def refreshWindows(window_back, window_id, window_qr, window_chargingPower, wind
     window_chargingTime.refresh()
     window_chargingPercent.refresh()
     window_chargingPercentMark.refresh()
+    window_price.refresh()
