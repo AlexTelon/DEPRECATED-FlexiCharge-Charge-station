@@ -42,7 +42,7 @@ img_qrCode = get_img_data('Pictures/QrCode.png')
 img_Busy = get_img_data('Pictures/Busy.png')
 
 chargerID = ['0','0','0','0','0','0']
-chargingPrice = '0'
+chargingPrice = 0
 chargingCapacity = [4.4, 22.5, 27.2, 33.5, 40.0, 60.0, 64.0, 95.0, 95.0, 100.0]
 chargingSpeed = [2.8, 3.2, 3.7, 4.6, 6.6, 7.2, 7.4, 11.0, 22.0, 50.0]
 url = "ws://54.220.194.65:1337/ssb"
@@ -108,7 +108,7 @@ async def statemachine(websocket):
                 window_qr.UnHide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 
-                #state.set_state(States.S_CHARGING)
+                state.set_state(States.S_CHARGING)
                 """res = await websocket.recv()
                 res_pared = json.loads(res)
                 #print(res_pared)
@@ -169,7 +169,7 @@ async def statemachine(websocket):
                 chargedkWh = 0
                 chargingTime = (((chargingCapacity[randomSpeed] / (chargingSpeed[randomSpeed]))) * 60)
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
-
+                countTo9 = 0
 
                 while True:
                     temp = int(percent * 100)
@@ -201,11 +201,17 @@ async def statemachine(websocket):
                     chargingTimeMinutes = int(chargingTime / 60)
                     
                     if chargingTimeMinutes < 1:
-                        window_chargingTime['TIME'].update(value="<1 minutes until full")
+                        window_chargingTime['TIME'].update(value="Less than 1 minutes until full.")
                     else:
-                        window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full")
+                        window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full.")
 
                     time.sleep(0.20)
+
+                    if countTo9 == 9:
+                        countTo9 = 0
+                        #send metervalues
+                    else:
+                        countTo9 += 1
                 state.set_state(States.S_FULLYCHARGED)
 
         elif state.get_state() == States.S_FULLYCHARGED:
