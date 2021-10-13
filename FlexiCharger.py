@@ -81,6 +81,8 @@ async def statemachine(websocket):
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
                     response = await reserveNow(websocket,res,state)
+                    print("Reservenow: ")
+                    print(response)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -96,6 +98,7 @@ async def statemachine(websocket):
                 #resp_pared = json.loads(resp)
                 if await remoteStartTransaction(websocket):
                     response = await startTransaction(websocket, response, uniqueID)
+                    print(response)
                     state.set_state(States.S_PLUGINCABLE)
 
         elif state.get_state() == States.S_PLUGINCABLE:
@@ -141,7 +144,7 @@ async def statemachine(websocket):
                 event = asyncio.Event()
                 
                 #task = loop.create_task()
-                asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
+                #asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
 
                 while True:
                     print(event.is_set())
@@ -165,6 +168,7 @@ async def statemachine(websocket):
                         window_chargingPercentMark.move(330, 350)                     
                     if percent > 0.99:   
                         state.set_state(States.S_FULLYCHARGED)
+                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100), response[3]['transactionId']), loop)
                         break
 
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
@@ -185,7 +189,7 @@ async def statemachine(websocket):
                     if countTo9 == 9:
                         #task.cancel()
                         countTo9 = 0
-                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100)), loop)
+                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100), response[3]['transactionId']), loop)
                         latestCharge = int(percent * 100)
                     else:
                         countTo9 += 1

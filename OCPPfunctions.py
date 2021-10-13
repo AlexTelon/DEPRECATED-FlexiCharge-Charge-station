@@ -47,6 +47,7 @@ async def remoteStartTransaction(websocket):
         # Retrieve request
         response = await websocket.recv()
         response_parsed = json.loads(response)
+        print("Remotestart: ")
         print(response_parsed)
 
         # Send back Accepted
@@ -128,19 +129,20 @@ async def stopTransaction(websocket, json_data, uniqueID):
     await websocket.send(y)
     print("Response: " + await websocket.recv())
 
-async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
-    b = [{ "transactionId": str(346), "latestMeterValue": str(latestCharge), "CurrentChargePercentage": str(currentCharge) }]
+async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, transactionId):
+    b = { "transactionId": transactionId, "latestMeterValue": latestCharge, "CurrentChargePercentage": currentCharge }
 
-    y = json.dumps(b)
+    a = json.dumps(b)
 
     x = [   2, 
             dataUniqueID, 
             "DataTransfer",
             { 
                 "messageId": "ChargeLevelUpdate",
-                "data": y
+                "data": a
             }
         ]
     y = json.dumps(x)
+    print(y)
     await websocket.send(y)
     print("Response: " + await websocket.recv())
