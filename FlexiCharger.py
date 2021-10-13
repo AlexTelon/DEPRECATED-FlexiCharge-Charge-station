@@ -250,7 +250,7 @@ def RFID():
         GPIO.cleanup()
 
 async def main():
-    global loop, state, chargerID, chargingPrice
+    global loop, state, chargerID, chargingPrice, uniqueID
     try:
         async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
             state.set_state(States.S_AVAILABLE)
@@ -275,6 +275,8 @@ async def main():
             resp = await websocket.recv()
             resp_parsed = json.loads(resp)
             print(resp_parsed)
+            
+            uniqueID = resp_parsed[1]
 
             dataTransfer = await websocket.recv()
             dataTransfer_parsed = json.loads(dataTransfer)
