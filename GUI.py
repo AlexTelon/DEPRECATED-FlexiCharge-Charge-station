@@ -59,36 +59,36 @@ def GUI(chargerID,img_startingUp,img_qrCode):
                         ]
                     ]
    
-    background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).Finalize()
+    background_window = sg.Window(title="FlexiCharge", layout=backgroundLayout, no_titlebar=True, location=(0,0), size=(480,800), keep_on_top=False, margins=(0,0)).finalize()
     if platform.system() != 'Windows':
         background_window.Maximize()
     background_window.TKroot["cursor"] = "none"
 
-    id_window = sg.Window(title="FlexiChargeTopWindow", layout=IdLayout, location=(26,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    id_window = sg.Window(title="FlexiChargeTopWindow", keep_on_top=True, layout=IdLayout, location=(26,703), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     id_window.TKroot["cursor"] = "none"
     id_window.hide()
 
-    qr_window = sg.Window(title="FlexiChargeQrWindow", layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, size=(285,285), background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
+    qr_window = sg.Window(title="FlexiChargeQrWindow", keep_on_top=True, layout=qrCodeLayout, location=(95, 165), grab_anywhere=False, no_titlebar=True, size=(285,285), background_color='white', margins=(0,0)).finalize() #location=(95, 165) bildstorlek 285x285 från början
     qr_window.TKroot["cursor"] = "none"
     qr_window.hide()
 
-    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", layout=chargingPowerLayout, location=(162, 645), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPower_window = sg.Window(title="FlexiChargeChargingPowerWindow", keep_on_top=True, layout=chargingPowerLayout, location=(162, 645), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPower_window.TKroot["cursor"] = "none"
     chargingPower_window.hide()
 
-    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", layout=chargingTimeLayout, location=(162, 694), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingTime_window = sg.Window(title="FlexiChargeChargingTimeWindow", keep_on_top=True, layout=chargingTimeLayout, location=(162, 694), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingTime_window.TKroot["cursor"] = "none"
     chargingTime_window.hide()
 
-    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentLayout, location=(140, 245), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercent_window = sg.Window(title="FlexiChargeChargingPercentWindow", keep_on_top=True, layout=chargingPercentLayout, location=(140, 245), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercent_window.TKroot["cursor"] = "none"
     chargingPercent_window.hide()
 
-    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", layout=chargingPercentMarkLayout, location=(276, 350), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
+    chargingPercentMark_window = sg.Window(title="FlexiChargeChargingPercentWindow", keep_on_top=True, layout=chargingPercentMarkLayout, location=(276, 350), grab_anywhere=False, no_titlebar=True, background_color='black', margins=(0,0)).finalize()
     chargingPercentMark_window.TKroot["cursor"] = "none"
     chargingPercentMark_window.hide()
 
-    price_window = sg.Window(title="FlexiChargeTopWindow", layout=priceLayout, location=(24,610), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
+    price_window = sg.Window(title="FlexiChargeTopWindow", keep_on_top=True, layout=priceLayout, location=(24,610), grab_anywhere=False, no_titlebar=True, background_color='white', margins=(0,0)).finalize()
     price_window.TKroot["cursor"] = "none"
     price_window.hide()
 
