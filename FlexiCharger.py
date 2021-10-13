@@ -57,36 +57,6 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_notAvailable)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark)
-            while True:
-                try:
-                    async with websockets.connect(url, ping_interval=None, timeout=None) as websocket:
-                        state.set_state(States.S_AVAILABLE)
-                        print("Connected.")
-                        pkg = [2, "0jdsEnnyo2kpCP8FLfHlNpbvQXosR5ZNlh8v", "BootNotification", {
-                        "chargePointVendor": "AVT-Company",
-                        "chargePointModel": "AVT-Express",
-                        "chargePointSerialNumber": "avt.001.13.1",
-                        "chargeBoxSerialNumber": "avt.001.13.1.01",
-                        "firmwareVersion": "0.9.87",
-                        "iccid": "",
-                        "imsi": "",
-                        "meterType": "AVT NQC-ACDC",
-                        "meterSerialNumber": "avt.001.13.1.01" }]
-                        pkg_send = json.dumps(pkg)
-                        await websocket.send(pkg_send)
-                        resp = await websocket.recv()
-                        resp_parsed = json.loads(resp)
-                        print(resp_parsed)
-                        resp2 = await websocket.recv()
-                        resp_parsed2 = json.loads(resp2)
-                        print(resp_parsed2)
-                        nisse = json.loads(resp_parsed2[3]['data'])
-                        print(nisse)
-                        chargerID = list(str(nisse["chargerId"]))
-                        chargingPrice = str(nisse['chargingPrice'])
-                except:
-                    pass
-                time.sleep(20)
         
         elif state.get_state() == States.S_AVAILABLE:
             if lastState.get_state() != state.get_state():
@@ -110,9 +80,7 @@ async def statemachine(websocket):
                 res_pared = json.loads(res)
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
-                    await reserveNow(websocket,res,state)
-                #time.sleep(random.randint(4,10))
-                #state.set_state(States.S_BUSY)"""
+                    await reserveNow(websocket,res,state)"""
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -137,7 +105,7 @@ async def statemachine(websocket):
                 window_id.hide()
                 window_qr.hide()
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
-                time.sleep(random.randint(6,15))
+                time.sleep(random.randint(2,5))
                 state.set_state(States.S_CONNECTINGTOCAR)
         
         elif state.get_state() == States.S_CONNECTINGTOCAR:
@@ -145,7 +113,7 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_connectingToCar)
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
-                time.sleep(random.randint(10,15))
+                time.sleep(random.randint(2,5))
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
@@ -154,7 +122,7 @@ async def statemachine(websocket):
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
                 
-                window_price.hide() #-------------------------------------------
+                window_price.hide() 
                 window_id.hide()
                 window_qr.hide()
                 
