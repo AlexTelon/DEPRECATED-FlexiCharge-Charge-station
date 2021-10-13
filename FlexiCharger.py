@@ -201,7 +201,7 @@ async def statemachine(websocket):
                     chargingTimeMinutes = int(chargingTime / 60)
                     
                     if chargingTimeMinutes < 1:
-                        window_chargingTime['TIME'].update(value="Less than 1 minutes until full.")
+                        window_chargingTime['TIME'].update(value="< 1 minutes until full.")
                     else:
                         window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full.")
 
