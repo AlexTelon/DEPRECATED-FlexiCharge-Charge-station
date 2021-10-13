@@ -137,12 +137,14 @@ async def statemachine(websocket):
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
                 latestCharge = 0
+                
                 event = asyncio.Event()
                 
-                task = loop.create_task(remoteStopTransaction(websocket, event), name="remoteStop")
-                asyncio.run_coroutine_threadsafe(task.get_coro(), loop)
+                #task = loop.create_task()
+                asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
 
                 while True:
+                    print(event.is_set())
                     window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if event.is_set():
@@ -181,9 +183,9 @@ async def statemachine(websocket):
                     await asyncio.sleep(0.20)
 
                     if countTo9 == 9:
-                        task.cancel()
+                        #task.cancel()
                         countTo9 = 0
-                        await dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100))
+                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100)), loop)
                         latestCharge = int(percent * 100)
                     else:
                         countTo9 += 1

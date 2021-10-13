@@ -73,18 +73,18 @@ async def remoteStopTransaction(websocket, event):
         response = await websocket.recv()
         response_parsed = json.loads(response)
         print(response_parsed)
-        
-        # Send back Accepted
-        pkg_accepted = [3,
-            response_parsed[1],
-            response_parsed[2],
-            {
-            "status": "Accepted"
-                               } ]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-        
-        event.set()
+        if (response_parsed[2] == "StopTransaction"):
+            # Send back Accepted
+            pkg_accepted = [3,
+                response_parsed[1],
+                response_parsed[2],
+                {
+                "status": "Accepted"
+                                   } ]
+            pkg_accepted_send = json.dumps(pkg_accepted)
+            await websocket.send(pkg_accepted_send)
+            
+            event.set()
 
     except:
         pass
@@ -129,10 +129,9 @@ async def stopTransaction(websocket, json_data, uniqueID):
     print("Response: " + await websocket.recv())
 
 async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
-    b = [{ "transactionId": 346, "latestMeterValue": latestCharge, "CurrentChargePercentage": currentCharge }]
+    b = [{ "transactionId": str(346), "latestMeterValue": str(latestCharge), "CurrentChargePercentage": str(currentCharge) }]
 
     y = json.dumps(b)
-    print(y)
 
     x = [   2, 
             dataUniqueID, 
