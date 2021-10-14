@@ -110,6 +110,7 @@ async def statemachine(websocket):
                         global test
                         response = await startTransaction(websocket, response, uniqueID)
                         print(response)
+                        dataUniqueID = response[1]
                         state.set_state(States.S_PLUGINCABLE)
                         break
                    
@@ -182,7 +183,7 @@ async def statemachine(websocket):
                     window_chargingPercent['PERCENT'].update(value=int(percent * 100))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if event.is_set():
-                        await asyncio.sleep(0.25)
+                        await asyncio.sleep(0.3)
                         if coro.cancel():
                             state.set_state(States.S_CHARGINGCANCELLED)
                             await stopTransaction(websocket, response, uniqueID)
@@ -227,14 +228,16 @@ async def statemachine(websocket):
                     if countTo9 == 9:
                         temp = 1
                         countTo9 = 0
-                        latestCharge = int(percent * 100)
                     else:
+                        if countTo9 == 0:
+                            latestCharge = int(percent * 100)
                         temp = 0
                         countTo9 += 1
                     
                     coro = asyncio.run_coroutine_threadsafe(HandleReceive(websocket, event, dataUniqueID, latestCharge, int(percent * 100), temp, response[3]['transactionId']), loop)
-                    await asyncio.sleep(0.25)
+                    await asyncio.sleep(0.3)
                     coro.cancel()
+                        
 
         elif state.get_state() == States.S_FULLYCHARGED:
             if lastState.get_state() != state.get_state():

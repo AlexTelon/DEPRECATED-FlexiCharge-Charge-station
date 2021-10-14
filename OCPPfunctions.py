@@ -112,7 +112,7 @@ async def stopTransaction(websocket, json_data, uniqueID):
 
 async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, transactionId):
     b = { "transactionId": transactionId, "latestMeterValue": latestCharge, "CurrentChargePercentage": currentCharge }
-
+    
     a = json.dumps(b)
 
     x = [   2, 
