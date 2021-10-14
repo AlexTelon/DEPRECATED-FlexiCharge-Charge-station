@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 import platform
 import nest_asyncio
 import random
-from OCPPfunctions import authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction, HandleReceive
+from OCPPfunctions import authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction, HandleReceive, handleExpire
 from GUI import GUI, generateQR, get_img_data, refreshWindows
 from StateHandler import States
 from StateHandler import StateHandler
@@ -94,9 +94,34 @@ async def statemachine(websocket):
                 #this might need to change later but for now it is random
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
-                if await remoteStartTransaction(websocket):
-                    response = await startTransaction(websocket, response, uniqueID)
-                    state.set_state(States.S_PLUGINCABLE)
+                
+                expiryDate = response[3]['expiryDate']
+                event = asyncio.Event()
+                event2 = asyncio.Event()
+                temp = 0
+                count = 0
+                
+                while True:
+                    if event.is_set():
+                        state.set_state(States.S_PLUGINCABLE)
+                        response = await startTransaction(websocket, response, uniqueID)
+                        break
+                        
+                    elif event.is_set():
+                        state.set_state(States.S_AVAILABLE)
+                        break
+                    
+                    await asyncio.sleep(0.20)
+                    
+                    if count == 10:
+                        temp = 1
+                        count = 0
+                    else:
+                        temp = 0
+                        count += 1
+                        
+                    asyncio.run_coroutine_threadsafe(handleExpire(websocket, event, event2, temp, expiryDate, uniqueID), loop)
+                    
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():

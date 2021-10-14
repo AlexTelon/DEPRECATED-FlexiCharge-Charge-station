@@ -145,7 +145,26 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
     await websocket.send(y)
     print("Response: " + await websocket.recv())
 
+    
+    
+async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
+    print("handling expire")
+    functionText = "none"
+    if temp == 0:
+        res_package = await websocket.recv()
+        json_data = json.loads(res_package)
+        print(json_data)
+        functionText = json_data[2]
 
+    if functionText == "RemoteStartTransaction":
+        await remoteStartTransaction(websocket, json_data)
+        event.set()
+    elif (expiryDate - 290) < time.time():
+        await statusNotification(websocket, uniqueID)
+        event2.set()
+    
+    
+    
 async def HandleReceive(websocket, event, dataUniqueID, latestCharge, currentCharge, temp):
     print("handling the recv")
     functionText = "none"
