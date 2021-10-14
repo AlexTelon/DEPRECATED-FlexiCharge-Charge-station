@@ -162,9 +162,12 @@ async def statemachine(websocket):
 
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
-                chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
-                test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
+                #chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed]
+                chargingTime = 100
+                #test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
+                test = "kWh at " + str(1) + "kW"
                 countTo9 = 0
+                countTo3 = 0
                 latestCharge = 0
 
                 event = asyncio.Event()
@@ -173,8 +176,10 @@ async def statemachine(websocket):
 
                 while True:
                     #print(event.is_set())
-                    window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
-                    window_chargingPower['POWER'].update(value=(str(round(chargedkWh, 1)) + test))
+                    #window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
+                    #window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+                    window_chargingPercent['PERCENT'].update(value=int(percent * 100))
+                    window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if event.is_set():
                         await asyncio.sleep(0.25)
                         if coro.cancel():
@@ -199,10 +204,16 @@ async def statemachine(websocket):
 
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
-                    chargedkWh += chargingSpeed[randomSpeed] / 60
-                    percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
-
-                    chargingTime -= 1
+                    #chargedkWh += chargingSpeed[randomSpeed] / 60
+                    #percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
+                    if countTo3 == 3:
+                        countTo3 = 0
+                    else:
+                        chargedkWh += 1
+                        chargingTime -= 1
+                        countTo3 += 1
+                    percent = chargedkWh / 100
+                    #chargingTimeMinutes = int(chargingTime)
                     chargingTimeMinutes = int(chargingTime / 60)
 
                     if chargingTimeMinutes < 1:
