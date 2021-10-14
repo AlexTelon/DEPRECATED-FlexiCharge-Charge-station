@@ -1,5 +1,6 @@
 import json
 import asyncio
+import time
 from multiprocessing import Value
 from StateHandler import States
 from StateHandler import StateHandler
@@ -37,12 +38,10 @@ async def reserveNow(websocket, res, state):
         #state.set_state(States.S_AVAILABLE)
         return 0
 
-async def remoteStartTransaction(websocket, v):
-    response = await websocket.recv()
-    response_parsed = json.loads(response)
-    print(response_parsed)
-    v.value = 1
-    print(v.value)
+async def remoteStartTransaction(websocket, response_parsed):
+    #response = await websocket.recv()
+    #response_parsed = json.loads(response)
+    #print(response_parsed)
     # Send back Accepted
     pkg_accepted = [3,
         response_parsed[1],
@@ -52,7 +51,8 @@ async def remoteStartTransaction(websocket, v):
                             } ]
     pkg_accepted_send = json.dumps(pkg_accepted)
     await websocket.send(pkg_accepted_send)
-async def remoteStopTransaction(websocket, event):
+
+async def remoteStopTransaction(websocket):
     try:
         # Retrieve request
         response = await websocket.recv()
@@ -68,14 +68,11 @@ async def remoteStopTransaction(websocket, event):
                                    } ]
             pkg_accepted_send = json.dumps(pkg_accepted)
             await websocket.send(pkg_accepted_send)
-            
-            event.set()
-
     except:
         pass
 
-async def statusNotification(websocket):
-    pkg = [1, {'connectorID': 1,
+async def statusNotification(websocket, uniqueID):
+    pkg = [2, uniqueID, "StatusNotification", {'connectorID': 1,
     'errorCode': 'NoError',
     'info': 0,
     'status': 'Available',
@@ -130,3 +127,36 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, tra
     print(y)
     await websocket.send(y)
     print("Response: " + await websocket.recv())
+
+async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
+    print("handling expire")
+    functionText = "none"
+    if temp == 0:
+        res_package = await websocket.recv()
+        json_data = json.loads(res_package)
+        print(json_data)
+        functionText = json_data[2]
+
+    if functionText == "RemoteStartTransaction":
+        await remoteStartTransaction(websocket, json_data)
+        event.set()
+    elif (expiryDate - 285) < time.time():
+        await statusNotification(websocket, uniqueID)
+        event2.set()
+
+async def HandleReceive(websocket, event, dataUniqueID, latestCharge, currentCharge, temp, transactionID):
+    print("handling the recv")
+    functionText = "none"
+    if temp == 0:
+        pkg_recv = await websocket.recv()
+        json_data = json.loads(pkg_recv)
+        functionText = json_data[2]
+        print(json_data)
+
+    if functionText == "RemoteStopTransaction":
+        print("remoteStop")
+        await remoteStopTransaction(websocket)
+        event.set()
+    else:
+        print("dataTransfer")
+        await dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, transactionID)

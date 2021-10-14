@@ -8,7 +8,7 @@ import platform
 import nest_asyncio
 import random
 import multiprocessing
-from OCPPfunctions import authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction
+from OCPPfunctions import HandleReceive, handleExpire, statusNotification, authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction
 from GUI import GUI, generateQR, get_img_data, refreshWindows
 from StateHandler import States
 from StateHandler import StateHandler
@@ -97,22 +97,35 @@ async def statemachine(websocket):
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
                 expiryDate = response[3]['expiryDate']
-                print(expiryDate)
 
-                remoteStartRecieved = multiprocessing.Value('d', 0)
-                asyncio.run_coroutine_threadsafe(remoteStartTransaction(websocket, remoteStartRecieved), loop)
+                event = asyncio.Event()
+                event2 = asyncio.Event()
+                temp = 0
+                count = 0
+                coro = 0
 
                 while True:
-                    await asyncio.sleep(0.1)
-                    if remoteStartRecieved.value > 0:
+                    if event.is_set():
                         response = await startTransaction(websocket, response, uniqueID)
                         print(response)
                         state.set_state(States.S_PLUGINCABLE)
                         break
-                    elif expiryDate < datetime.time:
-                        #statusnotification
+                   
+                    elif event2.is_set():
+                        #await statusNotification(websocket)
                         state.set_state(States.S_AVAILABLE)
                         break
+
+                    if count == 5:
+                        temp = 1
+                        count = 0
+                    else:
+                        count += 1
+                        temp = 0
+                    
+                    coro = asyncio.run_coroutine_threadsafe(handleExpire(websocket, event, event2, temp, expiryDate, uniqueID), loop)
+                    await asyncio.sleep(0.1)
+                    coro.cancel()
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -133,11 +146,11 @@ async def statemachine(websocket):
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
-            percent = 0.01
+            percent = 0
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
-                
+
                 window_chargingPower.un_hide()
                 window_chargingTime.un_hide()
                 window_chargingPercent.un_hide()
@@ -145,24 +158,28 @@ async def statemachine(websocket):
 
                 window_chargingPercent['PERCENT'].update(value='0')
                 window_chargingPercent.move(140, 245)
-                window_chargingPercentMark.move(276, 350) 
+                window_chargingPercentMark.move(276, 350)
 
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
                 chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
-                latestCharge = 1
-                
+                latestCharge = 0
+
                 event = asyncio.Event()
-                
+
                 #task = loop.create_task()
                 #asyncio.run_coroutine_threadsafe(remoteStopTransaction(websocket, event), loop)
+                #asyncio.run_coroutine_threadsafe(HandleReceive(websocket, temp), loop)
+
+
+                temp = 0
 
                 while True:
-                    print(event.is_set())
+                    #print(event.is_set())
                     window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
-                    window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+                    window_chargingPower['POWER'].update(value=(str(round(chargedkWh, 1)) + test))
                     if event.is_set():
                         state.set_state(States.S_CHARGINGCANCELLED)
                         await stopTransaction(websocket, response, uniqueID)
@@ -178,10 +195,9 @@ async def statemachine(websocket):
                         window_chargingPercent['PERCENT'].update(text_color='#78BD76')
                     if percent >= 0.10:
                         window_chargingPercent.move(60, 245)
-                        window_chargingPercentMark.move(330, 350)                     
-                    if percent > 0.99:   
+                        window_chargingPercentMark.move(330, 350)
+                    if percent > 0.99:
                         state.set_state(States.S_FULLYCHARGED)
-                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100), response[3]['transactionId']), loop)
                         break
 
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
@@ -191,21 +207,25 @@ async def statemachine(websocket):
 
                     chargingTime -= 1
                     chargingTimeMinutes = int(chargingTime / 60)
-                    
+
                     if chargingTimeMinutes < 1:
                         window_chargingTime['TIME'].update(value="< 1 minutes until full.")
                     else:
                         window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full.")
 
-                    await asyncio.sleep(0.20)
-
                     if countTo9 == 9:
                         #task.cancel()
+                        temp = 1
                         countTo9 = 0
-                        asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100), response[3]['transactionId']), loop)
+                        #asyncio.run_coroutine_threadsafe(dataTransfer(websocket, dataUniqueID, latestCharge, int(percent * 100)), loop)
                         latestCharge = int(percent * 100)
                     else:
+                        temp = 0
                         countTo9 += 1
+                    if event.is_set() != True:
+                        coro = asyncio.run_coroutine_threadsafe(HandleReceive(websocket, event, dataUniqueID, latestCharge, int(percent * 100), temp, response[3]['transactionId']), loop)
+                        await asyncio.sleep(0.25)
+                    coro.cancel()
 
         elif state.get_state() == States.S_FULLYCHARGED:
             if lastState.get_state() != state.get_state():
@@ -218,6 +238,7 @@ async def statemachine(websocket):
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 time.sleep(4)
                 window_chargingPower.hide()
+                statusNotification(websocket, uniqueID)
                 state.set_state(States.S_AVAILABLE)
                 
         elif state.get_state() == States.S_CHARGINGCANCELLED:
@@ -232,6 +253,7 @@ async def statemachine(websocket):
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
                 state.set_state(States.S_AVAILABLE)
+                statusNotification(websocket, uniqueID)
 
         elif state.get_state() == States.S_AUTHORIZING:
             if lastState.get_state() != state.get_state():
