@@ -136,8 +136,10 @@ async def statemachine(websocket):
 
                 randomSpeed = random.randint(0,9)
                 chargedkWh = 0
-                chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
-                test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
+                #chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed]
+                chargingTime = 100
+                #test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
+                test = "kWh at " + str(1) + "kW"
                 countTo9 = 0
                 latestCharge = 0
                 
@@ -148,7 +150,9 @@ async def statemachine(websocket):
 
                 while True:
                     print(event.is_set())
-                    window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
+                    #window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
+                    #window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+                    window_chargingPercent['PERCENT'].update(value=int(percent * 100))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if event.is_set():
                         state.set_state(States.S_CHARGINGCANCELLED)
@@ -173,10 +177,14 @@ async def statemachine(websocket):
 
                     refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
 
-                    chargedkWh += chargingSpeed[randomSpeed] / 60
-                    percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
+                    #chargedkWh += chargingSpeed[randomSpeed] / 60
+                    #percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
 
+                    
+                    chargedkWh += 1
                     chargingTime -= 1
+                    percent = chargedkWh / 100
+                    #chargingTimeMinutes = int(chargingTime)
                     chargingTimeMinutes = int(chargingTime / 60)
                     
                     if chargingTimeMinutes < 1:
@@ -184,7 +192,7 @@ async def statemachine(websocket):
                     else:
                         window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full.")
 
-                    await asyncio.sleep(0.20)
+                    await asyncio.sleep(1)
 
                     if countTo9 == 9:
                         #task.cancel()
