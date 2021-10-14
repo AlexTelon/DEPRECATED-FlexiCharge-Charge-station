@@ -126,7 +126,7 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, tra
     y = json.dumps(x)
     print(y)
     await websocket.send(y)
-    #print("Response: " + await websocket.recv())
+    print("Response: " + await websocket.recv())
 
 async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
     print("handling expire")
