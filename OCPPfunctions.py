@@ -129,7 +129,7 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, tra
     print("Response: " + await websocket.recv())
 
 async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
-    print("handling expire")
+    #print("handling expire")
     functionText = "none"
     if temp == 0:
         res_package = await websocket.recv()
@@ -145,7 +145,7 @@ async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
         event2.set()
 
 async def HandleReceive(websocket, event, dataUniqueID, latestCharge, currentCharge, temp, transactionID):
-    print("handling the recv")
+    #print("handling the recv")
     functionText = "none"
     if temp == 0:
         pkg_recv = await websocket.recv()
@@ -154,9 +154,9 @@ async def HandleReceive(websocket, event, dataUniqueID, latestCharge, currentCha
         print(json_data)
 
     if functionText == "RemoteStopTransaction":
-        print("remoteStop")
+        #print("remoteStop")
         await remoteStopTransaction(websocket)
         event.set()
     else:
-        print("dataTransfer")
+        #print("dataTransfer")
         await dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge, transactionID)

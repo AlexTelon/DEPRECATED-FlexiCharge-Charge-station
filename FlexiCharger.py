@@ -23,6 +23,7 @@ sg.Window._move_all_windows = True
 response = 0
 uniqueID = 0
 dataUniqueID = 0
+test = 0
 
 img_chargerID = get_img_data('Pictures/ChargerIDNew.png')
 img_startingUp = get_img_data('Pictures/StartingUp.png')
@@ -106,13 +107,13 @@ async def statemachine(websocket):
 
                 while True:
                     if event.is_set():
+                        global test
                         response = await startTransaction(websocket, response, uniqueID)
                         print(response)
                         state.set_state(States.S_PLUGINCABLE)
                         break
                    
                     elif event2.is_set():
-                        #await statusNotification(websocket)
                         state.set_state(States.S_AVAILABLE)
                         break
 
@@ -146,7 +147,7 @@ async def statemachine(websocket):
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
-            percent = 0
+            percent = 0.01
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
@@ -156,19 +157,19 @@ async def statemachine(websocket):
                 window_chargingPercent.un_hide()
                 window_chargingPercentMark.un_hide()
 
-                window_chargingPercent['PERCENT'].update(value='0')
+                window_chargingPercent['PERCENT'].update(value='1')
                 window_chargingPercent.move(140, 245)
                 window_chargingPercentMark.move(276, 350)
 
                 randomSpeed = random.randint(0,9)
-                chargedkWh = 0
-                #chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed]
+                chargedkWh = 1
+                #chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
                 chargingTime = 100
                 #test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 test = "kWh at " + str(1) + "kW"
                 countTo9 = 0
                 countTo3 = 0
-                latestCharge = 0
+                latestCharge = 1
 
                 event = asyncio.Event()
                 coro = 0
@@ -177,7 +178,7 @@ async def statemachine(websocket):
                 while True:
                     #print(event.is_set())
                     #window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
-                    #window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
+                    #window_chargingPower['POWER'].update(value=(str(round(chargedkWh, 1)) + test))
                     window_chargingPercent['PERCENT'].update(value=int(percent * 100))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh,1)) + test))
                     if event.is_set():
@@ -212,8 +213,10 @@ async def statemachine(websocket):
                         chargingTime -= 1
                     else:
                         countTo3 += 1
+
                     percent = chargedkWh / 100
-                    #chargingTimeMinutes = int(chargingTime)
+
+                    #chargingTime -= 1
                     chargingTimeMinutes = int(chargingTime / 60)
 
                     if chargingTimeMinutes < 1:
