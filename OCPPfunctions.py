@@ -21,7 +21,7 @@ async def send_heartbeat(websocket):
 
 async def reserveNow(websocket, res, state):
     #global state
-    #check if already booked? 
+    #check if already booked?
     try:
         res_pared = json.loads(res)
         print(res_pared)
@@ -62,7 +62,7 @@ async def remoteStartTransaction(websocket):
     except:
         return False
 
-async def remoteStopTransaction(websocket, event):
+async def remoteStopTransaction(websocket):
     try:
         # Send fake request from server
         #pkg = ["ssb", "RemoteStop"]
@@ -70,21 +70,21 @@ async def remoteStopTransaction(websocket, event):
         #await websocket.send(pkg_send)
 
         # Retrieve request
-        response = await websocket.recv()
-        response_parsed = json.loads(response)
-        print(response_parsed)
-        if (response_parsed[2] == "StopTransaction"):
-            # Send back Accepted
-            pkg_accepted = [3,
-                response_parsed[1],
-                response_parsed[2],
-                {
-                "status": "Accepted"
-                                   } ]
-            pkg_accepted_send = json.dumps(pkg_accepted)
-            await websocket.send(pkg_accepted_send)
-            
-            event.set()
+        #response = await websocket.recv()
+        #response_parsed = json.loads(response)
+        #print(response_parsed)
+        #if (response_parsed[2] == "StopTransaction"):
+        # Send back Accepted
+        pkg_accepted = [3,
+            response_parsed[1],
+            response_parsed[2],
+            {
+            "status": "Accepted"
+                               } ]
+        pkg_accepted_send = json.dumps(pkg_accepted)
+        await websocket.send(pkg_accepted_send)
+
+            #event.set()
 
     except:
         pass
@@ -133,10 +133,10 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
 
     y = json.dumps(b)
 
-    x = [   2, 
-            dataUniqueID, 
+    x = [   2,
+            dataUniqueID,
             "DataTransfer",
-            { 
+            {
                 "messageId": "ChargeLevelUpdate",
                 "data": y
             }
@@ -144,3 +144,21 @@ async def dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge):
     y = json.dumps(x)
     await websocket.send(y)
     print("Response: " + await websocket.recv())
+
+
+async def HandleReceive(websocket, event, dataUniqueID, latestCharge, currentCharge, temp):
+    print("handling the recv")
+    functionText = "none"
+    if temp == 0:
+        pkg_recv = await websocket.recv()
+        json_data = json.loads(pkg_recv)
+        functionText = json_data[2]
+        print(json_data)
+
+    if functionText == "RemoteStopTransaction":
+        print("remoteStop")
+        await remoteStopTransaction(websocket)
+        event.set()
+    else:
+        print("dataTransfer")
+        await dataTransfer(websocket, dataUniqueID, latestCharge, currentCharge)
