@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import websockets
 import json
 import time
@@ -7,7 +8,6 @@ import platform
 import nest_asyncio
 import random
 import multiprocessing
-from multiprocessing import Value
 from OCPPfunctions import authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction
 from GUI import GUI, generateQR, get_img_data, refreshWindows
 from StateHandler import States
@@ -83,8 +83,6 @@ async def statemachine(websocket):
                 #print(res_pared)
                 if res_pared[2] == "ReserveNow":
                     response = await reserveNow(websocket,res,state)
-                    print("Reservenow: ")
-                    print(response)
                 
         elif state.get_state() == States.S_BUSY:
             if lastState.get_state() != state.get_state():
@@ -102,17 +100,19 @@ async def statemachine(websocket):
                 print(expiryDate)
 
                 remoteStartRecieved = multiprocessing.Value('d', 0)
-                remoteStart = multiprocessing.Process(target=loop.run_until_complete(remoteStartTransaction(websocket, remoteStartRecieved)))
-                remoteStart.start()
-                remoteStart.join()
+                asyncio.run_coroutine_threadsafe(remoteStartTransaction(websocket, remoteStartRecieved), loop)
 
                 while True:
-                    if remoteStartRecieved.Value == 1:
+                    await asyncio.sleep(0.1)
+                    if remoteStartRecieved.value > 0:
                         response = await startTransaction(websocket, response, uniqueID)
                         print(response)
-                        remoteStart.terminate()
                         state.set_state(States.S_PLUGINCABLE)
-                    #elif time is over
+                        break
+                    elif expiryDate < datetime.time:
+                        #statusnotification
+                        state.set_state(States.S_AVAILABLE)
+                        break
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -152,7 +152,7 @@ async def statemachine(websocket):
                 chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
-                latestCharge = 0.01
+                latestCharge = 1
                 
                 event = asyncio.Event()
                 

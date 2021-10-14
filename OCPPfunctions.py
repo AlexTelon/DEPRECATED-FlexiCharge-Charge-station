@@ -40,9 +40,9 @@ async def reserveNow(websocket, res, state):
 async def remoteStartTransaction(websocket, v):
     response = await websocket.recv()
     response_parsed = json.loads(response)
-    print("Remotestart: ")
     print(response_parsed)
     v.value = 1
+    print(v.value)
     # Send back Accepted
     pkg_accepted = [3,
         response_parsed[1],
@@ -52,9 +52,6 @@ async def remoteStartTransaction(websocket, v):
                             } ]
     pkg_accepted_send = json.dumps(pkg_accepted)
     await websocket.send(pkg_accepted_send)
-    while True:
-        pass
-
 async def remoteStopTransaction(websocket, event):
     try:
         # Retrieve request
