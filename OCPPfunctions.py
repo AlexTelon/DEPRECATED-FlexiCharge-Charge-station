@@ -81,7 +81,7 @@ async def statusNotification(websocket, uniqueID):
     'vendorErrorCode': 0}]
     pkg_send = json.dumps(pkg)
     await websocket.send(pkg_send)
-
+    await asyncio.sleep(0.25)
     response = await websocket.recv()
     response_parsed = json.loads(response)
     print(response_parsed)
@@ -140,7 +140,7 @@ async def handleExpire(websocket, event, event2, temp, expiryDate, uniqueID):
     if functionText == "RemoteStartTransaction":
         await remoteStartTransaction(websocket, json_data)
         event.set()
-    elif (expiryDate - 285) < time.time():
+    elif expiryDate < time.time():
         await statusNotification(websocket, uniqueID)
         event2.set()
 

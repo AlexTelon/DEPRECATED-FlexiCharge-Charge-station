@@ -176,7 +176,7 @@ async def statemachine(websocket):
                     window_chargingPercent['PERCENT'].update(value=str(int(percent * 100)))
                     window_chargingPower['POWER'].update(value=(str(round(chargedkWh, 1)) + test))
                     if event.is_set():
-                        await asyncio.sleep(0.2)
+                        await asyncio.sleep(0.25)
                         if coro.cancel():
                             state.set_state(States.S_CHARGINGCANCELLED)
                             await stopTransaction(websocket, response, uniqueID)
@@ -211,7 +211,6 @@ async def statemachine(websocket):
                         window_chargingTime['TIME'].update(value=str(chargingTimeMinutes) + " minutes until full.")
 
                     if countTo9 == 9:
-                        #task.cancel()
                         temp = 1
                         countTo9 = 0
                         latestCharge = int(percent * 100)
@@ -220,7 +219,7 @@ async def statemachine(websocket):
                         countTo9 += 1
                     
                     coro = asyncio.run_coroutine_threadsafe(HandleReceive(websocket, event, dataUniqueID, latestCharge, int(percent * 100), temp, response[3]['transactionId']), loop)
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.25)
                     coro.cancel()
 
         elif state.get_state() == States.S_FULLYCHARGED:
@@ -234,8 +233,8 @@ async def statemachine(websocket):
                 refreshWindows(window_back, window_id, window_qr, window_chargingPower, window_chargingTime, window_chargingPercent, window_chargingPercentMark, window_price)
                 time.sleep(4)
                 window_chargingPower.hide()
-                await statusNotification(websocket, uniqueID)
                 state.set_state(States.S_AVAILABLE)
+                await statusNotification(websocket, uniqueID)
                 
         elif state.get_state() == States.S_CHARGINGCANCELLED:
             if lastState.get_state() != state.get_state():
