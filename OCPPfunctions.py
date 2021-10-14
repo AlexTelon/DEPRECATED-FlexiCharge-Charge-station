@@ -1,5 +1,6 @@
 import json
 import asyncio
+from multiprocessing import Value
 from StateHandler import States
 from StateHandler import StateHandler
 from datetime import datetime
@@ -36,25 +37,23 @@ async def reserveNow(websocket, res, state):
         #state.set_state(States.S_AVAILABLE)
         return 0
 
-async def remoteStartTransaction(websocket):
-    try:
-        response = await websocket.recv()
-        response_parsed = json.loads(response)
-        print("Remotestart: ")
-        print(response_parsed)
-
-        # Send back Accepted
-        pkg_accepted = [3,
-            response_parsed[1],
-            response_parsed[2],
-            {
-            "status": "Accepted"
-                               } ]
-        pkg_accepted_send = json.dumps(pkg_accepted)
-        await websocket.send(pkg_accepted_send)
-        return True
-    except:
-        return False
+async def remoteStartTransaction(websocket, v):
+    response = await websocket.recv()
+    response_parsed = json.loads(response)
+    print("Remotestart: ")
+    print(response_parsed)
+    v.value = 1
+    # Send back Accepted
+    pkg_accepted = [3,
+        response_parsed[1],
+        response_parsed[2],
+        {
+        "status": "Accepted"
+                            } ]
+    pkg_accepted_send = json.dumps(pkg_accepted)
+    await websocket.send(pkg_accepted_send)
+    while True:
+        pass
 
 async def remoteStopTransaction(websocket, event):
     try:

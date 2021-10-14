@@ -6,6 +6,8 @@ import PySimpleGUI as sg
 import platform
 import nest_asyncio
 import random
+import multiprocessing
+from multiprocessing import Value
 from OCPPfunctions import authorize, dataTransfer, send_heartbeat, reserveNow, remoteStartTransaction, remoteStopTransaction, startTransaction, stopTransaction
 from GUI import GUI, generateQR, get_img_data, refreshWindows
 from StateHandler import States
@@ -96,10 +98,21 @@ async def statemachine(websocket):
                 #this might need to change later but for now it is random
                 #resp = await websocket.recv()
                 #resp_pared = json.loads(resp)
-                if await remoteStartTransaction(websocket):
-                    response = await startTransaction(websocket, response, uniqueID)
-                    print(response)
-                    state.set_state(States.S_PLUGINCABLE)
+                expiryDate = response[3]['expiryDate']
+                print(expiryDate)
+
+                remoteStartRecieved = multiprocessing.Value('d', 0)
+                remoteStart = multiprocessing.Process(target=loop.run_until_complete(remoteStartTransaction(websocket, remoteStartRecieved)))
+                remoteStart.start()
+                remoteStart.join()
+
+                while True:
+                    if remoteStartRecieved.Value == 1:
+                        response = await startTransaction(websocket, response, uniqueID)
+                        print(response)
+                        remoteStart.terminate()
+                        state.set_state(States.S_PLUGINCABLE)
+                    #elif time is over
 
         elif state.get_state() == States.S_PLUGINCABLE:
             if lastState.get_state() != state.get_state():
@@ -120,7 +133,7 @@ async def statemachine(websocket):
                 state.set_state(States.S_CHARGING)
 
         elif state.get_state() == States.S_CHARGING:
-            percent = 0
+            percent = 0.01
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_charging)
@@ -139,7 +152,7 @@ async def statemachine(websocket):
                 chargingTime = chargingCapacity[randomSpeed] / chargingSpeed[randomSpeed] * 60
                 test = "kWh at " + str(chargingSpeed[randomSpeed]) + "kW"
                 countTo9 = 0
-                latestCharge = 0
+                latestCharge = 0.01
                 
                 event = asyncio.Event()
                 
@@ -198,7 +211,7 @@ async def statemachine(websocket):
             if lastState.get_state() != state.get_state():
                 lastState.set_state(state.get_state())
                 window_back['IMAGE'].update(data=img_fullyCharged)
-                window_chargingPower['POWER'].update(str(round(chargedkWh, 1)) + " kW used")
+                window_chargingPower['POWER'].update(str(round(chargedkWh, 1)) + " kWh used")
                 window_chargingTime.hide()
                 window_chargingPercent.hide()
                 window_chargingPercentMark.hide()
