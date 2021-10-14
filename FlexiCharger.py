@@ -208,9 +208,9 @@ async def statemachine(websocket):
                     #percent = round((chargedkWh / chargingCapacity[randomSpeed]), 2)
                     if countTo3 == 3:
                         countTo3 = 0
-                    else:
                         chargedkWh += 1
                         chargingTime -= 1
+                    else:
                         countTo3 += 1
                     percent = chargedkWh / 100
                     #chargingTimeMinutes = int(chargingTime)
